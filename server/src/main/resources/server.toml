@@ -1,0 +1,10 @@
+# Welcome to the server configuration file for Sparky
+
+# What should sparky display as the server brand
+brand = "sparky-1.0"
+
+# What port should sparky listen on
+port = 25565
+
+# The text that should be displayed when pinging
+motd = "Powered by <yellow>sparky</yellow>!"

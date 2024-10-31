@@ -1,0 +1,30 @@
+<Configuration status="WARN">
+    <Appenders>
+        <!-- Console Appender -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%p] %m%n"/>
+        </Console>
+
+        <RollingFile name="RollingFileLogger"
+                     fileName="logs/latest.log"
+                     filePattern="logs/%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%p] %m%n"/>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="io.netty" level="WARN" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <Root level="debug">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFileLogger"/>
+        </Root>
+    </Loggers>
+</Configuration>

@@ -1,0 +1,43 @@
+plugins {
+    id 'java'
+    id 'io.github.goooler.shadow' version '8.1.7'
+}
+
+group = 'net.echo'
+version = '1.0-DEV'
+
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+
+        maven { url 'https://jitpack.io' }
+        maven { url 'https://repository.minecodes.pl/releases' }
+        maven { url 'https://repo.codemc.io/repository/maven-public/'}
+    }
+
+    dependencies {
+        implementation 'com.google.code.gson:gson:2.10.1'
+
+        implementation 'net.kyori:adventure-api:4.17.0'
+        implementation 'net.kyori:adventure-text-minimessage:4.17.0'
+        implementation 'net.kyori:adventure-text-serializer-gson:4.17.0'
+
+        implementation 'com.moandjiezana.toml:toml4j:0.7.2'
+
+        implementation group: 'io.netty', name: 'netty-all', version: '4.1.112.Final'
+
+        implementation 'it.unimi.dsi:fastutil:8.5.13'
+
+        implementation 'com.google.guava:guava:33.2.1-jre'
+        implementation 'org.apache.logging.log4j:log4j-api:2.23.1'
+        implementation 'org.apache.logging.log4j:log4j-core:2.23.1'
+        implementation 'net.minestom:minestom-snapshots:dba90a461b'
+    }
+}
