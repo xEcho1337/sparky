@@ -1,8 +1,10 @@
 package net.echo.sparky.network;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import net.echo.sparky.math.Vector3i;
 
+import java.io.IOException;
 import java.util.UUID;
 
 public class NetworkBuffer {
@@ -67,6 +69,10 @@ public class NetworkBuffer {
 
     public String readString() {
         int length = readVarInt();
+
+        if (length > 32767) {
+            throw new IllegalArgumentException("Invalid length! Length must be smaller than 32767, was " + length + "!");
+        }
 
         byte[] bytes = new byte[length];
         buffer.readBytes(bytes);
@@ -174,5 +180,13 @@ public class NetworkBuffer {
         int y = (int) (value << 52 >> 52);
         int z = (int) (value << 26 >> 38);
         return new Vector3i(x, y, z);
+    }
+
+    public boolean readBoolean() {
+        return buffer.readBoolean();
+    }
+
+    public ByteBuf readBytes(int size) {
+        return buffer.readBytes(size);
     }
 }

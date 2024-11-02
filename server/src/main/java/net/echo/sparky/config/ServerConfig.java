@@ -5,6 +5,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 
 import java.io.*;
+import java.util.Map;
 
 public class ServerConfig {
 
@@ -18,6 +19,7 @@ public class ServerConfig {
 
         toml = toml.read(file);
     }
+
     private void createFromResources(File file) {
         try (InputStream resource = ServerConfig.class.getResourceAsStream("/server.toml");
              FileWriter fileWriter = new FileWriter(file);
@@ -34,11 +36,35 @@ public class ServerConfig {
         }
     }
 
+    public String getBrand() {
+        return toml.getString("brand");
+    }
+
     public int getPort() {
         return Math.toIntExact(toml.getLong("port"));
     }
 
     public Component getMotd() {
         return deserializer.deserialize(toml.getString("motd"));
+    }
+
+    public int getNettyThreads() {
+        return Math.toIntExact(toml.getLong("netty_threads"));
+    }
+
+    public int getTickRate() {
+        return Math.toIntExact(toml.getLong("ticks_per_second"));
+    }
+
+    public int getDifficulty() {
+        return Math.toIntExact(toml.getLong("difficulty"));
+    }
+
+    public int getMaxPlayers() {
+        return Math.toIntExact(toml.getLong("max_players"));
+    }
+
+    public String getPingVersionHover() {
+        return toml.getString("ping_version_hover");
     }
 }

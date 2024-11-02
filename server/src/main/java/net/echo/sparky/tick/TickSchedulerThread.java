@@ -2,11 +2,14 @@ package net.echo.sparky.tick;
 
 import net.echo.sparky.MinecraftServer;
 
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.LockSupport;
 
 public class TickSchedulerThread extends Thread {
 
-    private MinecraftServer server;
+    private final MinecraftServer server;
+    private final Queue<Runnable> packetQueue = new ConcurrentLinkedQueue<>();
 
     public TickSchedulerThread(MinecraftServer server) {
         super("Server-Ticker");
@@ -40,6 +43,14 @@ public class TickSchedulerThread extends Thread {
     }
 
     private void tick() {
+        for (Runnable runnable : packetQueue) {
+            runnable.run();
+        }
 
+        packetQueue.clear();
+    }
+
+    public Queue<Runnable> getPacketQueue() {
+        return packetQueue;
     }
 }

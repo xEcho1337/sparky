@@ -1,12 +1,15 @@
-package net.echo.sparky.network.packet.server;
+package net.echo.sparky.network.packet.server.play;
 
 import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.packet.Packet;
 
 public class ServerTimeUpdate implements Packet.Server {
 
-    private final int worldAge;
-    private final int timeOfDay;
+    private int worldAge;
+    private int timeOfDay;
+
+    public ServerTimeUpdate() {
+    }
 
     public ServerTimeUpdate(int worldAge, int timeOfDay) {
         this.worldAge = worldAge;

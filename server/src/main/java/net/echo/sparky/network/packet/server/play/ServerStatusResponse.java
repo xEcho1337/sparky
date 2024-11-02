@@ -1,4 +1,4 @@
-package net.echo.sparky.network.packet.server;
+package net.echo.sparky.network.packet.server.play;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -9,9 +9,12 @@ import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 
 public class ServerStatusResponse implements Packet.Server {
 
-    private final Players players;
-    private final Version version;
-    private final Description description;
+    private Players players;
+    private Version version;
+    private Description description;
+
+    public ServerStatusResponse() {
+    }
 
     public ServerStatusResponse(Players players, Version version, Description description) {
         this.players = players;

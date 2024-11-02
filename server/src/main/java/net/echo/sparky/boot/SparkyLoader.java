@@ -22,11 +22,5 @@ public class SparkyLoader {
         handler.register(AsyncLoginStartEvent.class, (event) -> {
             event.getName();
         });
-
-        World world = server.getWorlds().getFirst();
-
-        System.out.println(world.getBlock(10, 34, 210));
-        System.out.println(world.getBlock(10, 34, 1000));
-        System.out.println(world.getBlock(10, 41, 210));
     }
 }

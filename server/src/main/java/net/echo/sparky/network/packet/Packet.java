@@ -1,5 +1,6 @@
 package net.echo.sparky.network.packet;
 
+import io.netty.channel.ChannelHandlerContext;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.network.NetworkBuffer;
 
@@ -11,16 +12,16 @@ public interface Packet {
     /**
      * The packet is sent by the client.
      */
-    interface Client {
+    interface Client extends Packet {
         void read(NetworkBuffer buffer);
 
-        boolean handle(MinecraftServer server);
+        void handle(MinecraftServer server, ChannelHandlerContext context);
     }
 
     /**
      * The packet is sent by the server.
      */
-    interface Server {
+    interface Server extends Packet {
         void write(NetworkBuffer buffer);
     }
 }

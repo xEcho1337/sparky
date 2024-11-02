@@ -24,6 +24,8 @@ public class MinecraftEventHandler {
     public void call(Listenable event) {
         List<Consumer<Listenable>> callbacks = handlers.get(event.getClass());
 
+        if (callbacks == null) return;
+
         for (Consumer<Listenable> callback : callbacks) {
             callback.accept(event);
         }

@@ -1,4 +1,4 @@
-package net.echo.sparky.network.packet.server;
+package net.echo.sparky.network.packet.server.play;
 
 import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.packet.Packet;
@@ -7,8 +7,11 @@ import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 
 public class ServerChatMessage implements Packet.Server {
 
-    private final Component component;
-    private final MessageType messageType;
+    private Component component;
+    private MessageType messageType;
+
+    public ServerChatMessage() {
+    }
 
     public ServerChatMessage(Component component, MessageType messageType) {
         this.component = component;
