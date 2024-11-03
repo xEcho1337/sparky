@@ -6,6 +6,7 @@ import net.echo.sparky.event.impl.AsyncLoginStartEvent;
 import net.echo.sparky.world.Block;
 import net.echo.sparky.world.World;
 import net.echo.sparky.world.generator.ChunkProvider;
+import net.echo.sparky.world.generator.unit.impl.FlatWorldGenerator;
 
 public class SparkyLoader {
 
@@ -13,14 +14,8 @@ public class SparkyLoader {
         MinecraftServer server = new MinecraftServer();
 
         ChunkProvider provider = server.getChunkProvider();
-        provider.setGenerator(unit -> unit.fill(0, 40, Block.GRASS));
+        provider.setGenerator(new FlatWorldGenerator(4));
 
         server.start();
-
-        MinecraftEventHandler handler = server.getEventHandler();
-
-        handler.register(AsyncLoginStartEvent.class, (event) -> {
-            event.getName();
-        });
     }
 }

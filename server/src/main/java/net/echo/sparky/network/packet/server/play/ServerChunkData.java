@@ -43,13 +43,11 @@ public class ServerChunkData implements Packet.Server {
 
             if (section != null && (!groundUpContinuous || section.getNonAirBlocks() > 0) && (blockMask & 1 << y) != 0) {
                 extracted.dataSize |= 1 << y;
-                System.out.println("Non empty section at " + y);
                 nonEmptySections.add(section);
             }
         }
 
         extracted.data = new byte[calculateDataSize(nonEmptySections.size(), false, groundUpContinuous)];
-        System.out.println("extracted size: " + extracted.data.length);
         int offset = 0;
 
         for (ChunkSection section : nonEmptySections) {
@@ -67,7 +65,6 @@ public class ServerChunkData implements Packet.Server {
             Arrays.fill(blockLightData, (byte) 1);
 
             offset = copyArray(blockLightData, extracted.data, offset);
-            System.out.println(offset);
         }
 
         if (groundUpContinuous) {

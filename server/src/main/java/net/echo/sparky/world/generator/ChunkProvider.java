@@ -1,5 +1,7 @@
 package net.echo.sparky.world.generator;
 
+import net.echo.sparky.world.generator.unit.GenerationUnit;
+
 import java.util.function.Consumer;
 
 public class ChunkProvider {

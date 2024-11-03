@@ -1,6 +1,5 @@
 package net.echo.sparky.network.packet.client.handshake;
 
-import io.netty.channel.ChannelHandlerContext;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.event.Listenable;
 import net.echo.sparky.event.impl.AsyncHandshakeEvent;
@@ -8,6 +7,7 @@ import net.echo.sparky.event.impl.AsyncHandshakeEvent.*;
 import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.NetworkManager;
 import net.echo.sparky.network.packet.Packet;
+import net.echo.sparky.network.player.PlayerConnection;
 import net.echo.sparky.network.state.ConnectionState;
 
 public class ClientHandshake implements Packet.Client {
@@ -29,7 +29,7 @@ public class ClientHandshake implements Packet.Client {
     }
 
     @Override
-    public void handle(MinecraftServer server, ChannelHandlerContext context) {
+    public void handle(MinecraftServer server, PlayerConnection connection) {
         Listenable event = new AsyncHandshakeEvent(address, port, protocolVersion, nextState);
 
         server.getEventHandler().call(event);
@@ -41,7 +41,7 @@ public class ClientHandshake implements Packet.Client {
             case STATUS -> ConnectionState.STATUS;
         };
 
-        context.channel().attr(NetworkManager.CONNECTION_STATE).set(nextConnectionState);
+        connection.getChannel().attr(NetworkManager.CONNECTION_STATE).set(nextConnectionState);
     }
 
     public int getProtocolVersion() {

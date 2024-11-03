@@ -6,10 +6,9 @@ import net.echo.sparky.network.NetworkManager;
 import net.echo.sparky.tick.TickSchedulerThread;
 import net.echo.sparky.world.World;
 import net.echo.sparky.world.generator.ChunkProvider;
-import net.echo.sparky.world.generator.GenerationUnit;
+import net.echo.sparky.world.generator.unit.GenerationUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.checkerframework.checker.units.qual.N;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -89,6 +88,10 @@ public class MinecraftServer {
 
     public ServerConfig getConfig() {
         return config;
+    }
+
+    public NetworkManager getNetworkManager() {
+        return networkManager;
     }
 
     public ChunkProvider getChunkProvider() {

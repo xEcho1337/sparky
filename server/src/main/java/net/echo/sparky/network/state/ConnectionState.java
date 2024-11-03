@@ -50,7 +50,10 @@ public enum ConnectionState {
             this.registerPacket(0x07, PacketOwnership.CLIENT, ClientPlayerDigging::new);
             this.registerPacket(0x09, PacketOwnership.CLIENT, ClientHeldItemChange::new);
             this.registerPacket(0x0A, PacketOwnership.CLIENT, ClientArmSwing::new);
+            this.registerPacket(0x0B, PacketOwnership.CLIENT, ClientEntityAction::new);
+            this.registerPacket(0x13, PacketOwnership.CLIENT, ClientPlayerAbilities::new);
             this.registerPacket(0x15, PacketOwnership.CLIENT, ClientSettings::new);
+            this.registerPacket(0x16, PacketOwnership.CLIENT, ClientStatus::new);
             this.registerPacket(0x17, PacketOwnership.CLIENT, ClientPluginMessage::new);
             // this.registerPacket(0x08, PacketOwnership.CLIENT, ClientBlockPlacement::new);
 
@@ -63,6 +66,7 @@ public enum ConnectionState {
             this.registerPacket(0x07, PacketOwnership.SERVER, ServerRespawn::new);
             this.registerPacket(0x08, PacketOwnership.SERVER, ServerPositionAndLook::new);
             this.registerPacket(0x21, PacketOwnership.SERVER, ServerChunkData::new);
+            this.registerPacket(0x40, PacketOwnership.SERVER, ServerDisconnect::new);
         }
     };
 

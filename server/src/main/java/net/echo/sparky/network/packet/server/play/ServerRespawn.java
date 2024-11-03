@@ -2,10 +2,10 @@ package net.echo.sparky.network.packet.server.play;
 
 import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.packet.Packet;
-import net.echo.sparkyapi.enums.world.Difficulty;
-import net.echo.sparkyapi.enums.world.Dimension;
-import net.echo.sparkyapi.enums.world.GameMode;
-import net.echo.sparkyapi.enums.world.LevelType;
+import net.echo.sparkyapi.enums.Difficulty;
+import net.echo.sparkyapi.enums.Dimension;
+import net.echo.sparkyapi.enums.GameMode;
+import net.echo.sparkyapi.enums.LevelType;
 
 public class ServerRespawn implements Packet.Server {
 

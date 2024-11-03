@@ -1,6 +1,7 @@
 package net.echo.sparky.network.packet.client.login;
 
-import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.config.ServerConfig;
 import net.echo.sparky.event.Listenable;
@@ -15,11 +16,17 @@ import net.echo.sparky.network.packet.server.play.ServerChunkData;
 import net.echo.sparky.network.packet.server.play.ServerJoinGame;
 import net.echo.sparky.network.packet.server.play.ServerPositionAndLook;
 import net.echo.sparky.network.packet.server.play.ServerSpawnPosition;
+import net.echo.sparky.network.player.PlayerConnection;
 import net.echo.sparky.network.state.ConnectionState;
 import net.echo.sparky.world.World;
 import net.echo.sparky.world.chunk.ChunkColumn;
+import net.echo.sparkyapi.enums.Difficulty;
+import net.echo.sparkyapi.enums.Dimension;
+import net.echo.sparkyapi.enums.GameMode;
+import net.echo.sparkyapi.enums.LevelType;
 import net.echo.sparkyapi.world.RelativeFlag;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.nio.charset.StandardCharsets;
@@ -38,7 +45,7 @@ public class ClientLoginStart implements Packet.Client {
     }
 
     @Override
-    public void handle(MinecraftServer server, ChannelHandlerContext context) {
+    public void handle(MinecraftServer server, PlayerConnection connection) {
         Listenable event = new AsyncLoginStartEvent(name);
 
         server.getEventHandler().call(event);
@@ -46,33 +53,42 @@ public class ClientLoginStart implements Packet.Client {
         if (event.isCancelled()) return;
 
         ServerConfig config = server.getConfig();
-        net.echo.sparkyapi.enums.world.Difficulty difficulty = net.echo.sparkyapi.enums.world.Difficulty.values()[config.getDifficulty()];
+        Difficulty difficulty = Difficulty.values()[config.getDifficulty()];
 
         UUID uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
 
-        server.getLogger().info("{} ({}) logged in.", name, context.channel().remoteAddress());
+        connection.setName(name);
+        connection.setUuid(uuid);
+
+        server.getLogger().info("{} ({}) logged in.", name, connection.getChannel().remoteAddress());
 
         World world = server.getWorlds().getFirst();
 
         if (world == null) {
-            context.channel().writeAndFlush(new ServerLoginDisconnect(
-                    Component.text("No world found. Contact server administrators.")
-                    .color(NamedTextColor.RED)
-            ));
+            TextComponent reason = Component.text("No world found. Contact server administrators.").color(NamedTextColor.RED);
+            connection.close(reason);
+
             return;
         }
 
-        context.channel().writeAndFlush(new ServerLoginSuccess(uuid, name));
-        context.channel().attr(NetworkManager.CONNECTION_STATE).set(ConnectionState.PLAY);
+        connection.sendPacket(new ServerLoginSuccess(uuid, name),
+                future -> connection.getChannel().attr(NetworkManager.CONNECTION_STATE).set(ConnectionState.PLAY));
 
-        context.channel().writeAndFlush(new ServerJoinGame(0, net.echo.sparkyapi.enums.world.GameMode.CREATIVE, net.echo.sparkyapi.enums.world.Dimension.OVERWORLD,
-                difficulty, config.getMaxPlayers(), net.echo.sparkyapi.enums.world.LevelType.DEFAULT, false));
-        context.channel().writeAndFlush(new ServerSpawnPosition(new Vector3i(0, 64, 0)));
-        context.channel().writeAndFlush(new ServerPositionAndLook(0, 64, 0, 0, 0, RelativeFlag.EMPTY));
+        connection.sendPacket(new ServerJoinGame(0, GameMode.CREATIVE, Dimension.NETHER, difficulty, config.getMaxPlayers(), LevelType.DEFAULT, false));
+        connection.sendPacket(new ServerSpawnPosition(new Vector3i(0, 64, 0)));
+        connection.sendPacket(new ServerPositionAndLook(0, 64, 0, 0, 0, RelativeFlag.EMPTY));
 
-        ChunkColumn column = world.getChunkAt(0, 0);
+        int renderDistance = config.getRenderDistance() / 2;
 
-        context.channel().writeAndFlush(new ServerChunkData(column, true));
+        for (int x = -renderDistance; x < renderDistance; x++) {
+            for (int z = -renderDistance; z < renderDistance; z++) {
+                ChunkColumn column = world.getChunkAt(x, z);
+
+                if (column == null) continue;
+
+                connection.sendPacket(new ServerChunkData(column, true));
+            }
+        }
     }
 
     public String getName() {

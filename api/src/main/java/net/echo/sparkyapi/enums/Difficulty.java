@@ -1,4 +1,4 @@
-package net.echo.sparkyapi.enums.world;
+package net.echo.sparkyapi.enums;
 
 public enum Difficulty {
 

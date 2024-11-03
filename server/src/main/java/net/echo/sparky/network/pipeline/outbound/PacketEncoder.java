@@ -18,8 +18,6 @@ public class PacketEncoder extends MessageToByteEncoder<Packet.Server> {
         ConnectionState state = ctx.channel().attr(NetworkManager.CONNECTION_STATE).get();
         int packetId = state.getIdFromPacket(PacketOwnership.SERVER, packet);
 
-        System.out.println("Writing " + packet.getClass().getSimpleName() + " with id " + packetId + " to " + state);
-
         packetBuffer.writeVarInt(packetId);
         packet.write(packetBuffer);
     }

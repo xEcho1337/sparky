@@ -67,4 +67,8 @@ public class ServerConfig {
     public String getPingVersionHover() {
         return toml.getString("ping_version_hover");
     }
+
+    public int getRenderDistance() {
+        return Math.toIntExact(toml.getLong("render_distance"));
+    }
 }

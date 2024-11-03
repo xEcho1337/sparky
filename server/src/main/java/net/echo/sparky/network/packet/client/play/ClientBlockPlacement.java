@@ -1,10 +1,10 @@
 package net.echo.sparky.network.packet.client.play;
 
-import io.netty.channel.ChannelHandlerContext;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.math.Vector3i;
 import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.packet.Packet;
+import net.echo.sparky.network.player.PlayerConnection;
 import net.echo.sparkyapi.enums.Facing;
 
 // TODO
@@ -28,7 +28,7 @@ public class ClientBlockPlacement implements Packet.Client {
     }
 
     @Override
-    public void handle(MinecraftServer server, ChannelHandlerContext context) {
+    public void handle(MinecraftServer server, PlayerConnection connection) {
 
     }
 }

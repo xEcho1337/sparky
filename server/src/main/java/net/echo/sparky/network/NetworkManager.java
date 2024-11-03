@@ -17,6 +17,7 @@ import net.echo.sparky.network.pipeline.inbound.MessageSplitter;
 import net.echo.sparky.network.pipeline.inbound.PacketDecoder;
 import net.echo.sparky.network.pipeline.outbound.MessageSerializer;
 import net.echo.sparky.network.pipeline.outbound.PacketEncoder;
+import net.echo.sparky.network.player.ConnectionManager;
 import net.echo.sparky.network.state.ConnectionState;
 
 public class NetworkManager {
@@ -24,12 +25,15 @@ public class NetworkManager {
     public static final AttributeKey<ConnectionState> CONNECTION_STATE = AttributeKey.newInstance("connectionState");
 
     private final MinecraftServer server;
+    private final ConnectionManager connectionManager;
+
     private NioEventLoopGroup bossGroup;
     private NioEventLoopGroup workerGroup;
     private ChannelFuture networkChannel;
 
     public NetworkManager(MinecraftServer server) {
         this.server = server;
+        this.connectionManager = new ConnectionManager();
     }
 
     public void start(int port) {
@@ -77,8 +81,16 @@ public class NetworkManager {
                         .addLast("decoder", new PacketDecoder())
                         .addLast("serializer", new MessageSerializer())
                         .addLast("encoder", new PacketEncoder())
-                        .addLast("packet_handler", new PacketHandler(server));
+                        .addLast("packet_handler", new PacketHandler(NetworkManager.this));
             }
         };
+    }
+
+    public MinecraftServer getServer() {
+        return server;
+    }
+
+    public ConnectionManager getConnectionManager() {
+        return connectionManager;
     }
 }

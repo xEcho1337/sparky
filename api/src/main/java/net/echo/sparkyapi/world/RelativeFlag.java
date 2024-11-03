@@ -2,13 +2,13 @@ package net.echo.sparkyapi.world;
 
 // Credits to retrooper (packetevents)
 public class RelativeFlag {
-        
+
+    public static final RelativeFlag EMPTY = new RelativeFlag(0);
     public static final RelativeFlag X = new RelativeFlag(1);
     public static final RelativeFlag Y = new RelativeFlag(2);
     public static final RelativeFlag Z = new RelativeFlag(4);
     public static final RelativeFlag YAW = new RelativeFlag(8);
     public static final RelativeFlag PITCH = new RelativeFlag(16);
-    public static final RelativeFlag EMPTY = new RelativeFlag(0);
 
     private final byte mask;
 

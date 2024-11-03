@@ -1,8 +1,8 @@
 package net.echo.sparky.network.packet.client.play;
 
-import io.netty.channel.ChannelHandlerContext;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.network.NetworkBuffer;
+import net.echo.sparky.network.player.PlayerConnection;
 import net.echo.sparky.utils.ThreadScheduleUtils;
 
 public class ClientPositionLook extends ClientPositionIdle {
@@ -36,8 +36,8 @@ public class ClientPositionLook extends ClientPositionIdle {
     }
 
     @Override
-    public void handle(MinecraftServer server, ChannelHandlerContext context) {
-        if (!ThreadScheduleUtils.ensureMainThread(this, server, context)) return;
+    public void handle(MinecraftServer server, PlayerConnection connection) {
+        if (!ThreadScheduleUtils.ensureMainThread(this, server, connection)) return;
     }
 
     public double getX() {
