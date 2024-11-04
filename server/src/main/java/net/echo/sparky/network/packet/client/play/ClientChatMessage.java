@@ -7,6 +7,7 @@ import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.network.packet.server.play.ServerChatMessage;
 import net.echo.sparky.network.player.PlayerConnection;
+import net.echo.sparky.player.SparkyPlayer;
 import net.kyori.adventure.text.Component;
 
 public class ClientChatMessage implements Packet.Client {
@@ -33,7 +34,9 @@ public class ClientChatMessage implements Packet.Client {
 
         if (event.isCancelled()) return;
 
-        Component component = Component.text(String.format("<%s> %s", connection.getName(), message));
+        SparkyPlayer player = connection.getPlayer();
+
+        Component component = Component.text(String.format("<%s> %s", player.getName(), message));
 
         connection.sendPacket(new ServerChatMessage(component, ServerChatMessage.MessageType.CHAT));
     }

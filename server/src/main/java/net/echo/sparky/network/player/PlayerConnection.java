@@ -9,35 +9,53 @@ import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.network.packet.server.login.ServerLoginDisconnect;
 import net.echo.sparky.network.packet.server.play.ServerDisconnect;
 import net.echo.sparky.network.state.ConnectionState;
+import net.echo.sparky.player.SparkyPlayer;
 import net.kyori.adventure.text.TextComponent;
+import org.apache.logging.log4j.core.util.ArrayUtils;
 
-import java.util.LinkedHashMap;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static io.netty.channel.ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE;
 
 public class PlayerConnection {
 
-    private final LinkedHashMap<Packet.Server, GenericFutureListener<? extends Future<? super Void>>> packetQueue;
+    private final ConcurrentMap<Packet.Server, List<Runnable>> packetQueue;
     private final Channel channel;
-
-    private String name;
-    private UUID uuid;
+    private final SparkyPlayer player;
 
     public PlayerConnection(Channel channel) {
         this.channel = channel;
-        this.packetQueue = new LinkedHashMap<>();
+        this.player = new SparkyPlayer(this);
+        this.packetQueue = new ConcurrentHashMap<>();
     }
 
-    public synchronized void sendPacket(Packet.Server packet) {
-        this.packetQueue.put(packet, null);
+    public void sendPacket(Packet.Server packet) {
+        var alreadyCallbacks = packetQueue.get(packet);
+
+        if (alreadyCallbacks == null) {
+            alreadyCallbacks = new ArrayList<>();
+        }
+
+        this.packetQueue.put(packet, alreadyCallbacks);
     }
 
-    public synchronized void sendPacket(Packet.Server packet, GenericFutureListener<? extends Future<? super Void>> callback) {
-        this.packetQueue.put(packet, callback);
+    public void sendPacket(Packet.Server packet, Runnable... callbacks) {
+        var alreadyCallbacks = packetQueue.get(packet);
+
+        if (alreadyCallbacks == null) {
+            alreadyCallbacks = new ArrayList<>();
+        }
+
+        if (callbacks != null) {
+            alreadyCallbacks.addAll(List.of(callbacks));
+        }
+
+        this.packetQueue.put(packet, alreadyCallbacks);
     }
 
-    public synchronized LinkedHashMap<Packet.Server, GenericFutureListener<? extends Future<? super Void>>> getPacketQueue() {
+    public Map<Packet.Server, List<Runnable>> getPacketQueue() {
         return packetQueue;
     }
 
@@ -45,41 +63,37 @@ public class PlayerConnection {
         return channel;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public UUID getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(UUID uuid) {
-        this.uuid = uuid;
+    public SparkyPlayer getPlayer() {
+        return player;
     }
 
     public void close(TextComponent reason) {
         ConnectionState state = channel.attr(NetworkManager.CONNECTION_STATE).get();
 
-        Packet.Server packet = switch (state) {
-            case LOGIN -> new ServerLoginDisconnect(reason);
-            default -> new ServerDisconnect(reason);
-        };
+        Packet.Server packet = state == ConnectionState.LOGIN
+                ? new ServerLoginDisconnect(reason)
+                : new ServerDisconnect(reason);
 
         channel.writeAndFlush(packet);
         channel.close();
     }
 
-
-    public void dispatchPacket(Packet.Server packet, GenericFutureListener<? extends Future<? super Void>> callback) {
+    public void dispatchPacket(Packet.Server packet, List<Runnable> callbacks) {
         ChannelFuture future = channel.writeAndFlush(packet);
 
-        if (callback != null) {
-            future.addListener(callback);
+        for (Runnable callback : callbacks) {
+            if (callback == null) continue;
+
+            future.addListener(x -> callback.run());
         }
+
+        future.addListener(FIRE_EXCEPTION_ON_FAILURE);
+    }
+
+    public void dispatchPacket(Packet.Server packet, Runnable callback) {
+        ChannelFuture future = channel.writeAndFlush(packet);
+
+        future.addListener(x -> callback.run());
 
         future.addListener(FIRE_EXCEPTION_ON_FAILURE);
     }

@@ -23,3 +23,6 @@ difficulty = 1
 
 # Maximum amount of players allowed on the server
 max_players = 100
+
+# The radius where chunks gets sent
+render_distance = 16

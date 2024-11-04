@@ -1,7 +1,6 @@
 package net.echo.sparky.network.packet.client.login;
 
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
+import io.netty.util.Attribute;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.config.ServerConfig;
 import net.echo.sparky.event.Listenable;
@@ -10,7 +9,6 @@ import net.echo.sparky.math.Vector3i;
 import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.NetworkManager;
 import net.echo.sparky.network.packet.Packet;
-import net.echo.sparky.network.packet.server.login.ServerLoginDisconnect;
 import net.echo.sparky.network.packet.server.login.ServerLoginSuccess;
 import net.echo.sparky.network.packet.server.play.ServerChunkData;
 import net.echo.sparky.network.packet.server.play.ServerJoinGame;
@@ -18,6 +16,7 @@ import net.echo.sparky.network.packet.server.play.ServerPositionAndLook;
 import net.echo.sparky.network.packet.server.play.ServerSpawnPosition;
 import net.echo.sparky.network.player.PlayerConnection;
 import net.echo.sparky.network.state.ConnectionState;
+import net.echo.sparky.player.SparkyPlayer;
 import net.echo.sparky.world.World;
 import net.echo.sparky.world.chunk.ChunkColumn;
 import net.echo.sparkyapi.enums.Difficulty;
@@ -52,15 +51,14 @@ public class ClientLoginStart implements Packet.Client {
 
         if (event.isCancelled()) return;
 
-        ServerConfig config = server.getConfig();
-        Difficulty difficulty = Difficulty.values()[config.getDifficulty()];
-
         UUID uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
 
-        connection.setName(name);
-        connection.setUuid(uuid);
+        SparkyPlayer player = connection.getPlayer();
 
-        server.getLogger().info("{} ({}) logged in.", name, connection.getChannel().remoteAddress());
+        player.setName(name);
+        player.setUuid(uuid);
+
+        server.getLogger().info("{} ({}) logged in", name, connection.getChannel().remoteAddress());
 
         World world = server.getWorlds().getFirst();
 
@@ -71,8 +69,16 @@ public class ClientLoginStart implements Packet.Client {
             return;
         }
 
-        connection.sendPacket(new ServerLoginSuccess(uuid, name),
-                future -> connection.getChannel().attr(NetworkManager.CONNECTION_STATE).set(ConnectionState.PLAY));
+        Attribute<ConnectionState> stateAttribute = connection.getChannel().attr(NetworkManager.CONNECTION_STATE);
+
+        connection.sendPacket(new ServerLoginSuccess(uuid, name), () -> {
+            stateAttribute.set(ConnectionState.PLAY);
+            postLogin(connection, server.getConfig(), world);
+        });
+    }
+
+    private void postLogin(PlayerConnection connection, ServerConfig config, World world) {
+        Difficulty difficulty = Difficulty.values()[config.getDifficulty()];
 
         connection.sendPacket(new ServerJoinGame(0, GameMode.CREATIVE, Dimension.NETHER, difficulty, config.getMaxPlayers(), LevelType.DEFAULT, false));
         connection.sendPacket(new ServerSpawnPosition(new Vector3i(0, 64, 0)));

@@ -13,6 +13,7 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.network.packet.Packet;
+import net.echo.sparky.network.pipeline.ChannelPipeline;
 import net.echo.sparky.network.pipeline.PacketHandler;
 import net.echo.sparky.network.pipeline.inbound.MessageSplitter;
 import net.echo.sparky.network.pipeline.inbound.PacketDecoder;
@@ -50,11 +51,11 @@ public class NetworkManager {
         this.networkChannel = new ServerBootstrap()
                 .group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(getPipeline())
+                .childHandler(new ChannelPipeline(this))
                 .bind(port)
                 .syncUninterruptibly();
 
-        server.getLogger().info("Created the network channel at port {}", port);
+        server.getLogger().info("Opened network channel on port {} with {} threads", port, threads);
     }
 
     public void stop() {
@@ -68,31 +69,6 @@ public class NetworkManager {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         }
-    }
-
-    private ChannelInitializer<SocketChannel> getPipeline() {
-        return new ChannelInitializer<>() {
-            @Override
-            protected void initChannel(SocketChannel channel) {
-                ChannelConfig config = channel.config();
-
-                config.setOption(ChannelOption.TCP_NODELAY, Boolean.TRUE);
-                config.setOption(ChannelOption.TCP_FASTOPEN, 1);
-                config.setOption(ChannelOption.TCP_FASTOPEN_CONNECT, Boolean.TRUE);
-                config.setOption(ChannelOption.IP_TOS, 0x18);
-                config.setAllocator(ByteBufAllocator.DEFAULT);
-
-                ChannelPipeline pipeline = channel.pipeline();
-
-                pipeline
-                        .addLast("timeout", new ReadTimeoutHandler(30))
-                        .addLast("splitter", new MessageSplitter())
-                        .addLast("decoder", new PacketDecoder())
-                        .addLast("serializer", new MessageSerializer())
-                        .addLast("encoder", new PacketEncoder())
-                        .addLast("packet_handler", new PacketHandler(NetworkManager.this));
-            }
-        };
     }
 
     public MinecraftServer getServer() {

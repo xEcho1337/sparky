@@ -47,8 +47,6 @@ public class PacketHandler extends SimpleChannelInboundHandler<Packet.Client> {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext context, Throwable cause) {
-        cause.printStackTrace(System.err);
-
         TextComponent reason = Component.text(cause.getMessage()).color(NamedTextColor.RED);
 
         connection.close(reason);

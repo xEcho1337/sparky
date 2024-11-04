@@ -15,8 +15,7 @@ public class MinecraftEventHandler {
     private final ListMap<Listenable> handlers = new ListMap<>();
 
     public <T extends Listenable> void register(Class<T> clazz, Consumer<T> handler) {
-        List<Consumer<Listenable>> callbacks =
-                handlers.computeIfAbsent(clazz, k -> new ArrayList<>());
+        List<Consumer<Listenable>> callbacks = handlers.computeIfAbsent(clazz, k -> new ArrayList<>());
 
         callbacks.add((Consumer<Listenable>) handler);
     }

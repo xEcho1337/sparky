@@ -8,6 +8,7 @@ import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.network.player.ConnectionManager;
 import net.echo.sparky.network.player.PlayerConnection;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -51,6 +52,8 @@ public class TickSchedulerThread extends Thread {
     }
 
     private void tick() {
+        long start = System.nanoTime();
+
         for (Runnable runnable : scheduledTasks) {
             runnable.run();
         }
@@ -65,12 +68,16 @@ public class TickSchedulerThread extends Thread {
         for (PlayerConnection connection : connectionManager.getAll()) {
             var entries = connection.getPacketQueue().entrySet();
 
-            for (Map.Entry<Packet.Server, GenericFutureListener<? extends Future<? super Void>>> entry : entries) {
+            for (var entry : entries) {
                 connection.dispatchPacket(entry.getKey(), entry.getValue());
             }
 
             connection.getPacketQueue().clear();
         }
+
+        long took = System.nanoTime() - start;
+
+        // server.getLogger().info("Took " + took / 1e6 + " ms to tick");
     }
 
     public Queue<Runnable> getScheduledTasks() {
