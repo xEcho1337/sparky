@@ -1,6 +1,7 @@
 package net.echo.sparky.network.player;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import net.echo.sparky.network.NetworkManager;
@@ -12,6 +13,8 @@ import net.kyori.adventure.text.TextComponent;
 
 import java.util.LinkedHashMap;
 import java.util.UUID;
+
+import static io.netty.channel.ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE;
 
 public class PlayerConnection {
 
@@ -54,9 +57,8 @@ public class PlayerConnection {
         return uuid;
     }
 
-    public PlayerConnection setUuid(UUID uuid) {
+    public void setUuid(UUID uuid) {
         this.uuid = uuid;
-        return this;
     }
 
     public void close(TextComponent reason) {
@@ -69,5 +71,16 @@ public class PlayerConnection {
 
         channel.writeAndFlush(packet);
         channel.close();
+    }
+
+
+    public void dispatchPacket(Packet.Server packet, GenericFutureListener<? extends Future<? super Void>> callback) {
+        ChannelFuture future = channel.writeAndFlush(packet);
+
+        if (callback != null) {
+            future.addListener(callback);
+        }
+
+        future.addListener(FIRE_EXCEPTION_ON_FAILURE);
     }
 }

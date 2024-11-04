@@ -1,6 +1,5 @@
 package net.echo.sparky.utils;
 
-import io.netty.channel.ChannelHandlerContext;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.network.player.PlayerConnection;
@@ -13,7 +12,7 @@ public class ThreadScheduleUtils {
     public static boolean ensureMainThread(Packet.Client packet, MinecraftServer server, PlayerConnection connection) {
         if (Thread.currentThread() == server.getTickSchedulerThread()) return true;
 
-        server.getTickSchedulerThread().getPacketQueue().add(() -> packet.handle(server, connection));
+        server.getTickSchedulerThread().getScheduledTasks().add(() -> packet.handle(server, connection));
 
         return false;
     }
