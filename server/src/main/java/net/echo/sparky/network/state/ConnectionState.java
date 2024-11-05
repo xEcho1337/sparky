@@ -92,7 +92,8 @@ public enum ConnectionState {
     }
 
     public int getIdFromPacket(PacketOwnership direction, Packet packet) {
-        return classMap.get(direction).inverse().get(packet.getClass());
+        var map = classMap.get(direction).inverse();
+        return map.get(packet.getClass());
     }
 }
 

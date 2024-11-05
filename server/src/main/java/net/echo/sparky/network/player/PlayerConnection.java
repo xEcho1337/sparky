@@ -8,6 +8,7 @@ import net.echo.sparky.network.NetworkManager;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.network.packet.server.login.ServerLoginDisconnect;
 import net.echo.sparky.network.packet.server.play.ServerDisconnect;
+import net.echo.sparky.network.packet.server.play.ServerJoinGame;
 import net.echo.sparky.network.state.ConnectionState;
 import net.echo.sparky.player.SparkyPlayer;
 import net.kyori.adventure.text.TextComponent;
@@ -55,18 +56,6 @@ public class PlayerConnection {
         this.packetQueue.put(packet, alreadyCallbacks);
     }
 
-    public Map<Packet.Server, List<Runnable>> getPacketQueue() {
-        return packetQueue;
-    }
-
-    public Channel getChannel() {
-        return channel;
-    }
-
-    public SparkyPlayer getPlayer() {
-        return player;
-    }
-
     public void close(TextComponent reason) {
         ConnectionState state = channel.attr(NetworkManager.CONNECTION_STATE).get();
 
@@ -74,11 +63,29 @@ public class PlayerConnection {
                 ? new ServerLoginDisconnect(reason)
                 : new ServerDisconnect(reason);
 
-        channel.writeAndFlush(packet);
+        if (channel.isOpen() && channel.isActive()) {
+            channel.writeAndFlush(packet);
+        }
+
         channel.close();
     }
 
+    public void dispatchOnThread(Packet.Server packet, List<Runnable> callbacks) {
+        if (channel.eventLoop().inEventLoop()) {
+            dispatchPacket(packet, callbacks);
+        } else {
+            channel.eventLoop().execute(() -> dispatchPacket(packet, callbacks));
+        }
+    }
+
     public void dispatchPacket(Packet.Server packet, List<Runnable> callbacks) {
+        if (channel == null) return;
+
+        if (!channel.isActive() || !channel.isOpen()) {
+            channel.close();
+            return;
+        }
+
         ChannelFuture future = channel.writeAndFlush(packet);
 
         for (Runnable callback : callbacks) {
@@ -91,10 +98,40 @@ public class PlayerConnection {
     }
 
     public void dispatchPacket(Packet.Server packet, Runnable callback) {
+        if (channel == null) return;
+
+        if (!channel.isActive() || !channel.isOpen()) {
+            channel.close();
+            return;
+        }
+
         ChannelFuture future = channel.writeAndFlush(packet);
 
         future.addListener(x -> callback.run());
 
         future.addListener(FIRE_EXCEPTION_ON_FAILURE);
+    }
+
+    public void flushPacket(Packet.Server packet) {
+        if (channel == null) return;
+
+        if (!channel.isActive() || !channel.isOpen()) {
+            channel.close();
+            return;
+        }
+
+        channel.writeAndFlush(packet);
+    }
+
+    public Map<Packet.Server, List<Runnable>> getPacketQueue() {
+        return packetQueue;
+    }
+
+    public Channel getChannel() {
+        return channel;
+    }
+
+    public SparkyPlayer getPlayer() {
+        return player;
     }
 }

@@ -1,8 +1,8 @@
 package net.echo.sparky.event.impl;
 
-import net.echo.sparky.event.Listenable;
+import net.echo.sparky.event.Cancellable;
 
-public class AsyncHandshakeEvent extends Listenable {
+public class AsyncHandshakeEvent extends Cancellable {
 
     public enum HandshakeState {
         STATUS, LOGIN

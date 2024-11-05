@@ -38,15 +38,20 @@ public class PacketHandler extends SimpleChannelInboundHandler<Packet.Client> {
 
     @Override
     public void channelInactive(ChannelHandlerContext context) {
-        ConnectionState state = context.channel().attr(NetworkManager.CONNECTION_STATE).get();
-
         if (connection == null) return;
+
+        server.getPlayerList().remove(connection.getPlayer());
 
         networkManager.getConnectionManager().removeConnection(connection);
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext context, Throwable cause) {
+        if (cause.getMessage() == null) {
+            connection.close(Component.text("Unknown error").color(NamedTextColor.RED));
+            return;
+        }
+
         TextComponent reason = Component.text(cause.getMessage()).color(NamedTextColor.RED);
 
         connection.close(reason);

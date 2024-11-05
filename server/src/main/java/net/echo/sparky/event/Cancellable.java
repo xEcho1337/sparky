@@ -1,6 +1,6 @@
 package net.echo.sparky.event;
 
-public abstract class Listenable {
+public abstract class Cancellable implements Event {
 
     private boolean cancelled;
 

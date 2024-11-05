@@ -1,7 +1,7 @@
 package net.echo.sparky.network.packet.client.handshake;
 
 import net.echo.sparky.MinecraftServer;
-import net.echo.sparky.event.Listenable;
+import net.echo.sparky.event.Cancellable;
 import net.echo.sparky.event.impl.AsyncHandshakeEvent;
 import net.echo.sparky.event.impl.AsyncHandshakeEvent.*;
 import net.echo.sparky.network.NetworkBuffer;
@@ -30,7 +30,7 @@ public class ClientHandshake implements Packet.Client {
 
     @Override
     public void handle(MinecraftServer server, PlayerConnection connection) {
-        Listenable event = new AsyncHandshakeEvent(address, port, protocolVersion, nextState);
+        Cancellable event = new AsyncHandshakeEvent(address, port, protocolVersion, nextState);
 
         server.getEventHandler().call(event);
 

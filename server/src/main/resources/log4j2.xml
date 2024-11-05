@@ -18,7 +18,7 @@
     </Appenders>
 
     <Loggers>
-        <Logger name="io.netty" level="WARN" additivity="false">
+        <Logger name="io.netty" level="DEBUG" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
 

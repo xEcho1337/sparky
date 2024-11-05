@@ -79,7 +79,7 @@ public class ServerChunkData implements Packet.Server {
         return offset + source.length;
     }
 
-    protected static int calculateDataSize(final int sectionsCount, final boolean hasSky, final boolean groundUpContinuous) {
+    protected static int calculateDataSize(int sectionsCount, boolean hasSky, boolean groundUpContinuous) {
         final int blockDataSize = sectionsCount * 8192;
         final int blockDataSizeHalf = sectionsCount * 2048;
         final int blocklightSize = hasSky ? sectionsCount * 2048 : 0;

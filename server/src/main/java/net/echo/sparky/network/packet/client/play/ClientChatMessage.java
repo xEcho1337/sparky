@@ -1,7 +1,7 @@
 package net.echo.sparky.network.packet.client.play;
 
 import net.echo.sparky.MinecraftServer;
-import net.echo.sparky.event.Listenable;
+import net.echo.sparky.event.Cancellable;
 import net.echo.sparky.event.impl.AsyncChatEvent;
 import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.packet.Packet;
@@ -9,6 +9,7 @@ import net.echo.sparky.network.packet.server.play.ServerChatMessage;
 import net.echo.sparky.network.player.PlayerConnection;
 import net.echo.sparky.player.SparkyPlayer;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 
 public class ClientChatMessage implements Packet.Client {
 
@@ -28,7 +29,7 @@ public class ClientChatMessage implements Packet.Client {
 
     @Override
     public void handle(MinecraftServer server, PlayerConnection connection) {
-        Listenable event = new AsyncChatEvent(message);
+        Cancellable event = new AsyncChatEvent(message);
 
         server.getEventHandler().call(event);
 
@@ -36,8 +37,10 @@ public class ClientChatMessage implements Packet.Client {
 
         SparkyPlayer player = connection.getPlayer();
 
-        Component component = Component.text(String.format("<%s> %s", player.getName(), message));
+        TextComponent component = Component.text(String.format("<%s> %s", player.getName(), message));
 
-        connection.sendPacket(new ServerChatMessage(component, ServerChatMessage.MessageType.CHAT));
+        for (SparkyPlayer other : server.getPlayerList()) {
+            other.sendMessage(component);
+        }
     }
 }

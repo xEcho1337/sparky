@@ -1,8 +1,8 @@
 package net.echo.sparky.event.impl;
 
-import net.echo.sparky.event.Listenable;
+import net.echo.sparky.event.Cancellable;
 
-public class AsyncChatEvent extends Listenable {
+public class AsyncChatEvent extends Cancellable {
 
     private String message;
 

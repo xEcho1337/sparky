@@ -12,20 +12,20 @@ public class MinecraftEventHandler {
         // When you hate every 1.8 spigot fork so you lowkey rewrite it
     }
 
-    private final ListMap<Listenable> handlers = new ListMap<>();
+    private final ListMap<Event> handlers = new ListMap<>();
 
-    public <T extends Listenable> void register(Class<T> clazz, Consumer<T> handler) {
-        List<Consumer<Listenable>> callbacks = handlers.computeIfAbsent(clazz, k -> new ArrayList<>());
+    public <T extends Event> void register(Class<T> clazz, Consumer<T> handler) {
+        List<Consumer<Event>> callbacks = handlers.computeIfAbsent(clazz, k -> new ArrayList<>());
 
-        callbacks.add((Consumer<Listenable>) handler);
+        callbacks.add((Consumer<Event>) handler);
     }
 
-    public void call(Listenable event) {
-        List<Consumer<Listenable>> callbacks = handlers.get(event.getClass());
+    public void call(Event event) {
+        List<Consumer<Event>> callbacks = handlers.get(event.getClass());
 
         if (callbacks == null) return;
 
-        for (Consumer<Listenable> callback : callbacks) {
+        for (Consumer<Event> callback : callbacks) {
             callback.accept(event);
         }
     }

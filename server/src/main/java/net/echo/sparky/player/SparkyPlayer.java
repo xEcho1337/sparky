@@ -1,6 +1,8 @@
 package net.echo.sparky.player;
 
+import net.echo.sparky.network.packet.server.play.ServerChatMessage;
 import net.echo.sparky.network.player.PlayerConnection;
+import net.kyori.adventure.text.TextComponent;
 
 import java.util.UUID;
 
@@ -69,5 +71,9 @@ public class SparkyPlayer {
 
     public void setFood(double food) {
         this.food = food;
+    }
+
+    public void sendMessage(TextComponent component) {
+        connection.sendPacket(new ServerChatMessage(component, ServerChatMessage.MessageType.CHAT));
     }
 }

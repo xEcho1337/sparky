@@ -3,8 +3,11 @@ package net.echo.sparky.network.packet.client.login;
 import io.netty.util.Attribute;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.config.ServerConfig;
-import net.echo.sparky.event.Listenable;
-import net.echo.sparky.event.impl.AsyncLoginStartEvent;
+import net.echo.sparky.event.Cancellable;
+import net.echo.sparky.event.Event;
+import net.echo.sparky.event.impl.AsyncLoginEvent;
+import net.echo.sparky.event.impl.AsyncPreLoginStartEvent;
+import net.echo.sparky.event.impl.AsyncLoginEvent.*;
 import net.echo.sparky.math.Vector3i;
 import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.NetworkManager;
@@ -38,6 +41,8 @@ public class ClientLoginStart implements Packet.Client {
     public ClientLoginStart() {
     }
 
+
+
     @Override
     public void read(NetworkBuffer buffer) {
         this.name = buffer.readString();
@@ -45,7 +50,7 @@ public class ClientLoginStart implements Packet.Client {
 
     @Override
     public void handle(MinecraftServer server, PlayerConnection connection) {
-        Listenable event = new AsyncLoginStartEvent(name);
+        Cancellable event = new AsyncPreLoginStartEvent(name);
 
         server.getEventHandler().call(event);
 
@@ -73,16 +78,16 @@ public class ClientLoginStart implements Packet.Client {
 
         connection.sendPacket(new ServerLoginSuccess(uuid, name), () -> {
             stateAttribute.set(ConnectionState.PLAY);
-            postLogin(connection, server.getConfig(), world);
+            postLogin(server, connection, server.getConfig(), world, player);
         });
     }
 
-    private void postLogin(PlayerConnection connection, ServerConfig config, World world) {
+    private void postLogin(MinecraftServer server, PlayerConnection connection, ServerConfig config, World world, SparkyPlayer player) {
         Difficulty difficulty = Difficulty.values()[config.getDifficulty()];
 
-        connection.sendPacket(new ServerJoinGame(0, GameMode.CREATIVE, Dimension.NETHER, difficulty, config.getMaxPlayers(), LevelType.DEFAULT, false));
-        connection.sendPacket(new ServerSpawnPosition(new Vector3i(0, 64, 0)));
-        connection.sendPacket(new ServerPositionAndLook(0, 64, 0, 0, 0, RelativeFlag.EMPTY));
+        connection.flushPacket(new ServerJoinGame(0, GameMode.CREATIVE, Dimension.NETHER, difficulty, config.getMaxPlayers(), LevelType.DEFAULT, false));
+        connection.flushPacket(new ServerSpawnPosition(new Vector3i(0, 64, 0)));
+        connection.flushPacket(new ServerPositionAndLook(0, 64, 0, 0, 0, RelativeFlag.EMPTY));
 
         int renderDistance = config.getRenderDistance() / 2;
 
@@ -92,9 +97,22 @@ public class ClientLoginStart implements Packet.Client {
 
                 if (column == null) continue;
 
-                connection.sendPacket(new ServerChunkData(column, true));
+                connection.flushPacket(new ServerChunkData(column, true));
             }
         }
+
+        server.getPlayerList().add(player);
+
+        LoginResult result = new LoginResult(LoginResultType.ALLOWED, "");
+        AsyncLoginEvent event = new AsyncLoginEvent(player, result);
+
+        server.getEventHandler().call(event);
+
+        result = event.getResult();
+
+        if (result.getType() == LoginResultType.ALLOWED) return;
+
+        connection.close(Component.text(result.getReason()).color(NamedTextColor.RED));
     }
 
     public String getName() {

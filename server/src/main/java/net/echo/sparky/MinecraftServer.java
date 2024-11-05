@@ -3,10 +3,13 @@ package net.echo.sparky;
 import net.echo.sparky.config.ServerConfig;
 import net.echo.sparky.event.MinecraftEventHandler;
 import net.echo.sparky.network.NetworkManager;
+import net.echo.sparky.network.packet.server.play.ServerChatMessage;
+import net.echo.sparky.player.SparkyPlayer;
 import net.echo.sparky.tick.TickSchedulerThread;
 import net.echo.sparky.world.World;
 import net.echo.sparky.world.generator.ChunkProvider;
 import net.echo.sparky.world.generator.unit.GenerationUnit;
+import net.kyori.adventure.text.TextComponent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -30,7 +33,10 @@ public class MinecraftServer {
     private final ChunkProvider chunkProvider;
     private final MinecraftEventHandler eventHandler;
     private final TickSchedulerThread tickSchedulerThread;
-    private final List<World> loadedWorlds;
+
+    private final List<SparkyPlayer> playerList = new ArrayList<>();
+    private final List<World> loadedWorlds = new ArrayList<>();
+
     private boolean running;
 
     public MinecraftServer() {
@@ -39,7 +45,6 @@ public class MinecraftServer {
         this.chunkProvider = new ChunkProvider();
         this.eventHandler = new MinecraftEventHandler();
         this.tickSchedulerThread = new TickSchedulerThread(this);
-        this.loadedWorlds = new ArrayList<>();
     }
 
     public void start() {
@@ -106,7 +111,17 @@ public class MinecraftServer {
         return tickSchedulerThread;
     }
 
+    public List<SparkyPlayer> getPlayerList() {
+        return playerList;
+    }
+
     public List<World> getWorlds() {
         return loadedWorlds;
+    }
+
+    public void broadcast(TextComponent message) {
+        for (SparkyPlayer player : playerList) {
+            player.getConnection().sendPacket(new ServerChatMessage(message, ServerChatMessage.MessageType.CHAT));
+        }
     }
 }

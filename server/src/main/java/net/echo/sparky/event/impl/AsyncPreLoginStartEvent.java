@@ -1,12 +1,12 @@
 package net.echo.sparky.event.impl;
 
-import net.echo.sparky.event.Listenable;
+import net.echo.sparky.event.Cancellable;
 
-public class AsyncLoginStartEvent extends Listenable {
+public class AsyncPreLoginStartEvent extends Cancellable {
 
     private String name;
 
-    public AsyncLoginStartEvent(String name) {
+    public AsyncPreLoginStartEvent(String name) {
         this.name = name;
     }
 
