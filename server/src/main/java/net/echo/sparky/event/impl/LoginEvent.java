@@ -3,12 +3,12 @@ package net.echo.sparky.event.impl;
 import net.echo.sparky.event.Event;
 import net.echo.sparky.player.SparkyPlayer;
 
-public class AsyncLoginEvent implements Event {
+public class LoginEvent implements Event {
 
     private final SparkyPlayer player;
     private LoginResult result;
 
-    public AsyncLoginEvent(SparkyPlayer player, LoginResult result) {
+    public LoginEvent(SparkyPlayer player, LoginResult result) {
         this.player = player;
         this.result = result;
     }

@@ -120,7 +120,9 @@ public class MinecraftServer {
     }
 
     public void broadcast(TextComponent message) {
-        for (SparkyPlayer player : playerList) {
+        var copy = new ArrayList<>(playerList);
+
+        for (SparkyPlayer player : copy) {
             player.getConnection().sendPacket(new ServerChatMessage(message, ServerChatMessage.MessageType.CHAT));
         }
     }

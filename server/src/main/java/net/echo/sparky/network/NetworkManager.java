@@ -43,7 +43,7 @@ public class NetworkManager {
     public void start(int port) {
         int threads = server.getConfig().getNettyThreads();
 
-        this.bossGroup = new NioEventLoopGroup();
+        this.bossGroup = new NioEventLoopGroup(threads);
         this.workerGroup = new NioEventLoopGroup(threads);
 
         ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);

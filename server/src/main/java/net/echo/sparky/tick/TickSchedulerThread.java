@@ -1,6 +1,8 @@
 package net.echo.sparky.tick;
 
 import net.echo.sparky.MinecraftServer;
+import net.echo.sparky.event.impl.AsyncPostFlushEvent;
+import net.echo.sparky.event.impl.AsyncPreFlushEvent;
 import net.echo.sparky.network.NetworkManager;
 import net.echo.sparky.network.packet.server.play.ServerKeepAlive;
 import net.echo.sparky.network.player.ConnectionManager;
@@ -62,6 +64,7 @@ public class TickSchedulerThread extends Thread {
         // TODO: Tick everything
         long now = System.currentTimeMillis();
 
+
         for (SparkyPlayer player : server.getPlayerList()) {
             long difference = System.currentTimeMillis() - player.getTimeSinceLastKeepAlive();
 
@@ -73,8 +76,22 @@ public class TickSchedulerThread extends Thread {
 
         scheduledTasks.clear();
 
+        flush();
+
+        long took = System.nanoTime() - start;
+
+        if (took > 1_000_000) {
+            server.getLogger().warn("Took {} ms to tick", took / 1e6);
+        }
+    }
+
+    private void flush() {
         NetworkManager networkManager = server.getNetworkManager();
         ConnectionManager connectionManager = networkManager.getConnectionManager();
+
+        AsyncPreFlushEvent preFlushEvent = new AsyncPreFlushEvent();
+
+        server.getEventHandler().call(preFlushEvent);
 
         for (PlayerConnection connection : connectionManager.getAll()) {
             var entries = connection.getPacketQueue().entrySet();
@@ -86,11 +103,9 @@ public class TickSchedulerThread extends Thread {
             connection.getPacketQueue().clear();
         }
 
-        long took = System.nanoTime() - start;
+        AsyncPostFlushEvent postFlushEvent = new AsyncPostFlushEvent();
 
-        if (took > 1_000_000) {
-            server.getLogger().warn("Took {} ms to tick", took / 1e6);
-        }
+        server.getEventHandler().call(postFlushEvent);
     }
 
     public Queue<Runnable> getScheduledTasks() {

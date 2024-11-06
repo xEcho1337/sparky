@@ -4,10 +4,9 @@ import io.netty.util.Attribute;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.config.ServerConfig;
 import net.echo.sparky.event.Cancellable;
-import net.echo.sparky.event.Event;
-import net.echo.sparky.event.impl.AsyncLoginEvent;
+import net.echo.sparky.event.impl.LoginEvent;
 import net.echo.sparky.event.impl.AsyncPreLoginStartEvent;
-import net.echo.sparky.event.impl.AsyncLoginEvent.*;
+import net.echo.sparky.event.impl.LoginEvent.*;
 import net.echo.sparky.math.Vector3i;
 import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.NetworkManager;
@@ -101,18 +100,18 @@ public class ClientLoginStart implements Packet.Client {
             }
         }
 
-        server.getPlayerList().add(player);
+        server.getTickSchedulerThread().getScheduledTasks().add(() -> {
+            server.getPlayerList().add(player);
 
-        LoginResult result = new LoginResult(LoginResultType.ALLOWED, "");
-        AsyncLoginEvent event = new AsyncLoginEvent(player, result);
+            LoginResult result = new LoginResult(LoginResultType.ALLOWED, "");
+            LoginEvent event = new LoginEvent(player, result);
 
-        server.getEventHandler().call(event);
+            server.getEventHandler().call(event);
 
-        result = event.getResult();
+            if (event.getResult().getType() == LoginResultType.ALLOWED) return;
 
-        if (result.getType() == LoginResultType.ALLOWED) return;
-
-        connection.close(Component.text(result.getReason()).color(NamedTextColor.RED));
+            connection.close(Component.text(event.getResult().getReason()).color(NamedTextColor.RED));
+        });
     }
 
     public String getName() {
