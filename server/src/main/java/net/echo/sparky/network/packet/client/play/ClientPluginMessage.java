@@ -2,6 +2,7 @@ package net.echo.sparky.network.packet.client.play;
 
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.network.NetworkBuffer;
+import net.echo.sparky.network.handler.PacketHandlerProcessor;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.network.player.PlayerConnection;
 
@@ -25,15 +26,23 @@ public class ClientPluginMessage implements Packet.Client {
     }
 
     @Override
-    public void handle(MinecraftServer server, PlayerConnection connection) {
-        data.release();
+    public void handle(PacketHandlerProcessor processor) {
+        processor.handlePluginMessage(this);
     }
 
     public String getChannel() {
         return channel;
     }
 
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
+
     public NetworkBuffer getData() {
         return data;
+    }
+
+    public void setData(NetworkBuffer data) {
+        this.data = data;
     }
 }

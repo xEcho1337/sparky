@@ -4,6 +4,7 @@ import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.event.Cancellable;
 import net.echo.sparky.event.impl.AsyncChatEvent;
 import net.echo.sparky.network.NetworkBuffer;
+import net.echo.sparky.network.handler.PacketHandlerProcessor;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.network.packet.server.play.ServerChatMessage;
 import net.echo.sparky.network.player.PlayerConnection;
@@ -28,19 +29,15 @@ public class ClientChatMessage implements Packet.Client {
     }
 
     @Override
-    public void handle(MinecraftServer server, PlayerConnection connection) {
-        Cancellable event = new AsyncChatEvent(message);
+    public void handle(PacketHandlerProcessor processor) {
+        processor.handleChatMessage(this);
+    }
 
-        server.getEventHandler().call(event);
+    public String getMessage() {
+        return message;
+    }
 
-        if (event.isCancelled()) return;
-
-        SparkyPlayer player = connection.getPlayer();
-
-        TextComponent component = Component.text(String.format("<%s> %s", player.getName(), message));
-
-        for (SparkyPlayer other : server.getPlayerList()) {
-            other.sendMessage(component);
-        }
+    public void setMessage(String message) {
+        this.message = message;
     }
 }

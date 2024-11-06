@@ -2,18 +2,19 @@ package net.echo.sparky.network.packet.client.play;
 
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.network.NetworkBuffer;
+import net.echo.sparky.network.handler.PacketHandlerProcessor;
 import net.echo.sparky.network.player.PlayerConnection;
 import net.echo.sparky.utils.ThreadScheduleUtils;
 
-public class ClientLook extends ClientPositionIdle {
+public class ClientPlayerLook extends ClientPlayerIdle {
 
     private float yaw;
     private float pitch;
 
-    public ClientLook() {
+    public ClientPlayerLook() {
     }
 
-    public ClientLook(float yaw, float pitch, boolean onGround) {
+    public ClientPlayerLook(float yaw, float pitch, boolean onGround) {
         super(onGround);
         this.yaw = yaw;
         this.pitch = pitch;
@@ -27,8 +28,8 @@ public class ClientLook extends ClientPositionIdle {
     }
 
     @Override
-    public void handle(MinecraftServer server, PlayerConnection connection) {
-        if (!ThreadScheduleUtils.ensureMainThread(this, server, connection)) return;
+    public void handle(PacketHandlerProcessor processor) {
+        processor.handleLook(this);
     }
 
     public float getYaw() {

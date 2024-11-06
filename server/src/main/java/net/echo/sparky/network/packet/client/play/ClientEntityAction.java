@@ -2,6 +2,7 @@ package net.echo.sparky.network.packet.client.play;
 
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.network.NetworkBuffer;
+import net.echo.sparky.network.handler.PacketHandlerProcessor;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.network.player.PlayerConnection;
 
@@ -28,8 +29,8 @@ public class ClientEntityAction implements Packet.Client {
     }
 
     @Override
-    public void handle(MinecraftServer server, PlayerConnection connection) {
-
+    public void handle(PacketHandlerProcessor processor) {
+        processor.handleEntityAction(this);
     }
 
     public enum Action {
@@ -40,11 +41,23 @@ public class ClientEntityAction implements Packet.Client {
         return entityId;
     }
 
+    public void setEntityId(int entityId) {
+        this.entityId = entityId;
+    }
+
     public Action getAction() {
         return action;
     }
 
+    public void setAction(Action action) {
+        this.action = action;
+    }
+
     public int getActionValue() {
         return actionValue;
+    }
+
+    public void setActionValue(int actionValue) {
+        this.actionValue = actionValue;
     }
 }

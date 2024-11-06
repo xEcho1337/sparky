@@ -1,7 +1,9 @@
 package net.echo.sparky.network.packet.client.play;
 
+import io.netty.buffer.search.AhoCorasicSearchProcessorFactory;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.network.NetworkBuffer;
+import net.echo.sparky.network.handler.PacketHandlerProcessor;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.network.player.PlayerConnection;
 
@@ -22,8 +24,8 @@ public class ClientStatus implements Packet.Client {
     }
 
     @Override
-    public void handle(MinecraftServer server, PlayerConnection connection) {
-
+    public void handle(PacketHandlerProcessor processor) {
+        processor.handleStatus(this);
     }
 
     public enum Action {

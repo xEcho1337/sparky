@@ -43,10 +43,10 @@ public enum ConnectionState {
             this.registerPacket(0x00, PacketOwnership.CLIENT, ClientKeepAlive::new);
             this.registerPacket(0x01, PacketOwnership.CLIENT, ClientChatMessage::new);
             this.registerPacket(0x02, PacketOwnership.CLIENT, ClientUseEntity::new);
-            this.registerPacket(0x03, PacketOwnership.CLIENT, ClientPositionIdle::new);
-            this.registerPacket(0x04, PacketOwnership.CLIENT, ClientPosition::new);
-            this.registerPacket(0x05, PacketOwnership.CLIENT, ClientLook::new);
-            this.registerPacket(0x06, PacketOwnership.CLIENT, ClientPositionLook::new);
+            this.registerPacket(0x03, PacketOwnership.CLIENT, ClientPlayerIdle::new);
+            this.registerPacket(0x04, PacketOwnership.CLIENT, ClientPlayerPosition::new);
+            this.registerPacket(0x05, PacketOwnership.CLIENT, ClientPlayerLook::new);
+            this.registerPacket(0x06, PacketOwnership.CLIENT, ClientPlayerPositionAndLook::new);
             this.registerPacket(0x07, PacketOwnership.CLIENT, ClientPlayerDigging::new);
             this.registerPacket(0x09, PacketOwnership.CLIENT, ClientHeldItemChange::new);
             this.registerPacket(0x0A, PacketOwnership.CLIENT, ClientArmSwing::new);

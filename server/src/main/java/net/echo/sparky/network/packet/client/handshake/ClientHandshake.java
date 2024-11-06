@@ -6,6 +6,7 @@ import net.echo.sparky.event.impl.AsyncHandshakeEvent;
 import net.echo.sparky.event.impl.AsyncHandshakeEvent.*;
 import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.NetworkManager;
+import net.echo.sparky.network.handler.PacketHandlerProcessor;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.network.player.PlayerConnection;
 import net.echo.sparky.network.state.ConnectionState;
@@ -29,19 +30,8 @@ public class ClientHandshake implements Packet.Client {
     }
 
     @Override
-    public void handle(MinecraftServer server, PlayerConnection connection) {
-        Cancellable event = new AsyncHandshakeEvent(address, port, protocolVersion, nextState);
-
-        server.getEventHandler().call(event);
-
-        if (event.isCancelled()) return;
-
-        ConnectionState nextConnectionState = switch (nextState) {
-            case LOGIN -> ConnectionState.LOGIN;
-            case STATUS -> ConnectionState.STATUS;
-        };
-
-        connection.getChannel().attr(NetworkManager.CONNECTION_STATE).set(nextConnectionState);
+    public void handle(PacketHandlerProcessor processor) {
+        processor.handleHandshake(this);
     }
 
     public int getProtocolVersion() {

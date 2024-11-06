@@ -2,6 +2,7 @@ package net.echo.sparky.network.packet.client.play;
 
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.network.NetworkBuffer;
+import net.echo.sparky.network.handler.PacketHandlerProcessor;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.network.player.PlayerConnection;
 
@@ -34,8 +35,8 @@ public class ClientSettings implements Packet.Client {
     }
 
     @Override
-    public void handle(MinecraftServer server, PlayerConnection connection) {
-
+    public void handle(PacketHandlerProcessor processor) {
+        processor.handleSettings(this);
     }
 
     public enum ChatMode {
@@ -46,19 +47,39 @@ public class ClientSettings implements Packet.Client {
         return locale;
     }
 
+    public void setLocale(String locale) {
+        this.locale = locale;
+    }
+
     public byte getViewDistance() {
         return viewDistance;
+    }
+
+    public void setViewDistance(byte viewDistance) {
+        this.viewDistance = viewDistance;
     }
 
     public ChatMode getChatMode() {
         return chatMode;
     }
 
+    public void setChatMode(ChatMode chatMode) {
+        this.chatMode = chatMode;
+    }
+
     public boolean isChatColors() {
         return chatColors;
     }
 
+    public void setChatColors(boolean chatColors) {
+        this.chatColors = chatColors;
+    }
+
     public byte getSkinParts() {
         return skinParts;
+    }
+
+    public void setSkinParts(byte skinParts) {
+        this.skinParts = skinParts;
     }
 }

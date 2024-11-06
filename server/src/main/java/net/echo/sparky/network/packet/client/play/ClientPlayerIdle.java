@@ -2,18 +2,19 @@ package net.echo.sparky.network.packet.client.play;
 
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.network.NetworkBuffer;
+import net.echo.sparky.network.handler.PacketHandlerProcessor;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.network.player.PlayerConnection;
 import net.echo.sparky.utils.ThreadScheduleUtils;
 
-public class ClientPositionIdle implements Packet.Client {
+public class ClientPlayerIdle implements Packet.Client {
 
     private boolean onGround;
 
-    public ClientPositionIdle() {
+    public ClientPlayerIdle() {
     }
 
-    public ClientPositionIdle(boolean onGround) {
+    public ClientPlayerIdle(boolean onGround) {
         this.onGround = onGround;
     }
 
@@ -23,8 +24,8 @@ public class ClientPositionIdle implements Packet.Client {
     }
 
     @Override
-    public void handle(MinecraftServer server, PlayerConnection connection) {
-        if (!ThreadScheduleUtils.ensureMainThread(this, server, connection)) return;
+    public void handle(PacketHandlerProcessor processor) {
+        processor.handleIdle(this);
     }
 
     public boolean isOnGround() {

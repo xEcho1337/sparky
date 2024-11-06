@@ -4,6 +4,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.network.NetworkManager;
+import net.echo.sparky.network.handler.PacketHandlerProcessor;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.network.player.PlayerConnection;
 import net.echo.sparky.network.state.ConnectionState;
@@ -15,7 +16,9 @@ public class PacketHandler extends SimpleChannelInboundHandler<Packet.Client> {
 
     private final NetworkManager networkManager;
     private final MinecraftServer server;
+
     private PlayerConnection connection;
+    private PacketHandlerProcessor processor;
 
     public PacketHandler(NetworkManager networkManager) {
         this.networkManager = networkManager;
@@ -24,12 +27,13 @@ public class PacketHandler extends SimpleChannelInboundHandler<Packet.Client> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext context, Packet.Client packet) {
-        packet.handle(server, connection);
+        packet.handle(processor);
     }
 
     @Override
     public void channelActive(ChannelHandlerContext context) {
         this.connection = new PlayerConnection(context.channel());
+        this.processor = new PacketHandlerProcessor(server, connection);
 
         networkManager.getConnectionManager().addConnection(connection);
 

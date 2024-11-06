@@ -2,6 +2,7 @@ package net.echo.sparky.network.packet;
 
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.network.NetworkBuffer;
+import net.echo.sparky.network.handler.PacketHandlerProcessor;
 import net.echo.sparky.network.player.PlayerConnection;
 
 /**
@@ -15,7 +16,7 @@ public interface Packet {
     interface Client extends Packet {
         void read(NetworkBuffer buffer);
 
-        void handle(MinecraftServer server, PlayerConnection connection);
+        void handle(PacketHandlerProcessor processor);
     }
 
     /**
