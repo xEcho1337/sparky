@@ -1,7 +1,7 @@
 # Welcome to the server configuration file for Sparky
 
 # What should sparky display as the server brand
-brand = "sparky_1.0"
+brand = "sparky 1.0"
 
 # What port should sparky listen on
 port = 25565

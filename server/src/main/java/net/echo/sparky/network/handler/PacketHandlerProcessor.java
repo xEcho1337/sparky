@@ -8,6 +8,7 @@ import net.echo.sparky.event.impl.async.AsyncHandshakeEvent;
 import net.echo.sparky.event.impl.login.AsyncPreLoginEvent;
 import net.echo.sparky.event.impl.login.LoginEvent;
 import net.echo.sparky.math.Vector3i;
+import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.NetworkManager;
 import net.echo.sparky.network.packet.client.handshake.ClientHandshake;
 import net.echo.sparky.network.packet.client.handshake.ClientPing;
@@ -201,8 +202,8 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
 
         double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
 
-        // TODO: Check for teleports
-        if (distance > 3) {
+        // TODO: Check for server added velocity
+        if (distance > 5) {
             player.teleport(new Location(location.getWorld(), x, y, z, location.getYaw(), location.getPitch()));
         } else {
             location.setX(newX);
@@ -215,12 +216,83 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
         if (!ThreadScheduleUtils.ensureMainThread(packet, this)) return;
 
         SparkyPlayer player = connection.getPlayer();
+        Location location = player.getLocation();
 
+        float yaw = packet.getYaw();
+        float pitch = packet.getPitch();
 
+        if (Double.isInfinite(yaw) || Double.isNaN(yaw)) {
+            connection.close(Component.text("Invalid position.").color(NamedTextColor.RED));
+            return;
+        }
+
+        if (Double.isInfinite(pitch) || Double.isNaN(pitch)) {
+            connection.close(Component.text("Invalid position.").color(NamedTextColor.RED));
+            return;
+        }
+
+        location.setYaw(yaw);
+        location.setPitch(pitch);
     }
 
     public void handlePositionAndLook(ClientPlayerPositionAndLook packet) {
+        if (!ThreadScheduleUtils.ensureMainThread(packet, this)) return;
 
+        SparkyPlayer player = connection.getPlayer();
+        Location location = player.getLocation();
+
+        double x = location.getX();
+        double y = location.getY();
+        double z = location.getZ();
+
+        double newX = packet.getX();
+        double newY = packet.getY();
+        double newZ = packet.getZ();
+
+        float yaw = packet.getYaw();
+        float pitch = packet.getPitch();
+
+        if (Double.isInfinite(newX) || Double.isNaN(newX)) {
+            connection.close(Component.text("Invalid position.").color(NamedTextColor.RED));
+            return;
+        }
+
+        if (Double.isInfinite(newY) || Double.isNaN(newY)) {
+            connection.close(Component.text("Invalid position.").color(NamedTextColor.RED));
+            return;
+        }
+
+        if (Double.isInfinite(newZ) || Double.isNaN(newZ)) {
+            connection.close(Component.text("Invalid position.").color(NamedTextColor.RED));
+            return;
+        }
+
+        if (Double.isInfinite(yaw) || Double.isNaN(yaw)) {
+            connection.close(Component.text("Invalid position.").color(NamedTextColor.RED));
+            return;
+        }
+
+        if (Double.isInfinite(pitch) || Double.isNaN(pitch)) {
+            connection.close(Component.text("Invalid position.").color(NamedTextColor.RED));
+            return;
+        }
+
+        double deltaX = Math.abs(newX - x);
+        double deltaY = Math.abs(newY - y);
+        double deltaZ = Math.abs(newZ - z);
+
+        double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+
+        // TODO: Check for server added velocity
+        if (distance > 5) {
+            player.teleport(new Location(location.getWorld(), x, y, z, yaw, pitch));
+        } else {
+            location.setX(newX);
+            location.setY(newY);
+            location.setZ(newZ);
+            location.setYaw(yaw);
+            location.setPitch(pitch);
+        }
     }
 
     public void handlePlayerDigging(ClientPlayerDigging packet) {
@@ -232,7 +304,16 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
     }
 
     public void handleHeldItemChange(ClientHeldItemChange packet) {
+        if (!ThreadScheduleUtils.ensureMainThread(packet, this)) return;
 
+        SparkyPlayer player = connection.getPlayer();
+
+        if (packet.getSlot() > 8 || packet.getSlot() < 0) {
+            connection.close(Component.text("Invalid slot.").color(NamedTextColor.RED));
+            return;
+        }
+
+        player.getInventory().setHeldItemSlot(packet.getSlot());
     }
 
     public void handleArmSwing(ClientArmSwing packet) {
@@ -256,6 +337,16 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
     }
 
     public void handlePluginMessage(ClientPluginMessage packet) {
+        if (!ThreadScheduleUtils.ensureMainThread(packet, this)) return;
 
+        SparkyPlayer player = connection.getPlayer();
+
+        if (packet.getChannel().equals("MC|Brand")) {
+            NetworkBuffer data = packet.getData();
+
+            String brand = data.readString();
+
+            player.CLIENT_BRAND.setValue(brand);
+        }
     }
 }

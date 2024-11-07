@@ -6,14 +6,12 @@ import net.echo.sparky.network.packet.server.play.ServerChatMessage;
 import net.echo.sparky.network.packet.server.play.ServerPositionAndLook;
 import net.echo.sparky.network.packet.server.play.ServerRespawn;
 import net.echo.sparky.network.player.PlayerConnection;
+import net.echo.sparkyapi.attribute.Attribute;
 import net.echo.sparkyapi.enums.Difficulty;
 import net.echo.sparkyapi.enums.Dimension;
 import net.echo.sparkyapi.enums.GameMode;
 import net.echo.sparkyapi.enums.LevelType;
-import net.echo.sparkyapi.world.GameProfile;
-import net.echo.sparkyapi.world.Location;
-import net.echo.sparkyapi.world.RelativeFlag;
-import net.echo.sparkyapi.world.World;
+import net.echo.sparkyapi.world.*;
 import net.kyori.adventure.text.TextComponent;
 
 import java.util.UUID;
@@ -21,15 +19,18 @@ import java.util.UUID;
 public class SparkyPlayer {
 
     private final PlayerConnection connection;
+    private final Inventory inventory = new Inventory();
+
+    public final Attribute<String> CLIENT_BRAND = new Attribute<>(null);
+    public final Attribute<Integer> TICKS_ALIVE = new Attribute<>(0);
+    public final Attribute<Double> HEALTH = new Attribute<>(20d);
+    public final Attribute<Double> FOOD = new Attribute<>(5d);
 
     private GameMode gameMode = GameMode.SURVIVAL;
     private Location location = new Location();
-    private World world;
     private GameProfile gameProfile;
+    private World world;
     private long timeSinceLastKeepAlive;
-    private int ticksAlive;
-    private double health;
-    private double food;
 
     public SparkyPlayer(PlayerConnection connection) {
         this.connection = connection;
@@ -37,6 +38,10 @@ public class SparkyPlayer {
 
     public PlayerConnection getConnection() {
         return connection;
+    }
+
+    public Inventory getInventory() {
+        return inventory;
     }
 
     public GameMode getGameMode() {
@@ -103,30 +108,6 @@ public class SparkyPlayer {
 
     public void setTimeSinceLastKeepAlive(long timeSinceLastKeepAlive) {
         this.timeSinceLastKeepAlive = timeSinceLastKeepAlive;
-    }
-
-    public int getTicksAlive() {
-        return ticksAlive;
-    }
-
-    public void setTicksAlive(int ticksAlive) {
-        this.ticksAlive = ticksAlive;
-    }
-
-    public double getHealth() {
-        return health;
-    }
-
-    public void setHealth(double health) {
-        this.health = health;
-    }
-
-    public double getFood() {
-        return food;
-    }
-
-    public void setFood(double food) {
-        this.food = food;
     }
 
     public void sendMessage(TextComponent component) {
