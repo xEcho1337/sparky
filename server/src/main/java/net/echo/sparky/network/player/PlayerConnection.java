@@ -2,6 +2,8 @@ package net.echo.sparky.network.player;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import net.echo.sparky.MinecraftServer;
+import net.echo.sparky.event.impl.packet.PacketSendEvent;
 import net.echo.sparky.network.NetworkManager;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.network.packet.server.login.ServerLoginDisconnect;
@@ -83,6 +85,12 @@ public class PlayerConnection {
             channel.close();
             return;
         }
+
+        PacketSendEvent event = new PacketSendEvent(packet);
+
+        MinecraftServer.getInstance().getEventHandler().call(event);
+
+        if (event.isCancelled()) return;
 
         ChannelFuture future = channel.writeAndFlush(packet);
 

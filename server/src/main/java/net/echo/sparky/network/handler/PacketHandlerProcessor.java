@@ -3,10 +3,10 @@ package net.echo.sparky.network.handler;
 import io.netty.util.Attribute;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.config.ServerConfig;
-import net.echo.sparky.event.impl.AsyncChatEvent;
-import net.echo.sparky.event.impl.AsyncHandshakeEvent;
-import net.echo.sparky.event.impl.AsyncPreLoginEvent;
-import net.echo.sparky.event.impl.LoginEvent;
+import net.echo.sparky.event.impl.async.AsyncChatEvent;
+import net.echo.sparky.event.impl.async.AsyncHandshakeEvent;
+import net.echo.sparky.event.impl.login.AsyncPreLoginEvent;
+import net.echo.sparky.event.impl.login.LoginEvent;
 import net.echo.sparky.math.Vector3i;
 import net.echo.sparky.network.NetworkManager;
 import net.echo.sparky.network.packet.client.handshake.ClientHandshake;
@@ -34,23 +34,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-public class PacketHandlerProcessor {
-
-    private final MinecraftServer server;
-    private final PlayerConnection connection;
-
-    public PacketHandlerProcessor(MinecraftServer server, PlayerConnection connection) {
-        this.server = server;
-        this.connection = connection;
-    }
-
-    public MinecraftServer getServer() {
-        return server;
-    }
-
-    public PlayerConnection getConnection() {
-        return connection;
-    }
+public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection connection) {
 
     public void handleHandshake(ClientHandshake packet) {
         AsyncHandshakeEvent event = new AsyncHandshakeEvent(

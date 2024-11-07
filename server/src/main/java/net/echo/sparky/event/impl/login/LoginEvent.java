@@ -1,4 +1,4 @@
-package net.echo.sparky.event.impl;
+package net.echo.sparky.event.impl.login;
 
 import net.echo.sparky.event.Event;
 import net.echo.sparky.player.SparkyPlayer;

@@ -1,8 +1,8 @@
 package net.echo.sparky.tick;
 
 import net.echo.sparky.MinecraftServer;
-import net.echo.sparky.event.impl.AsyncPostFlushEvent;
-import net.echo.sparky.event.impl.AsyncPreFlushEvent;
+import net.echo.sparky.event.impl.async.AsyncPostFlushEvent;
+import net.echo.sparky.event.impl.async.AsyncPreFlushEvent;
 import net.echo.sparky.network.NetworkManager;
 import net.echo.sparky.network.packet.server.play.ServerKeepAlive;
 import net.echo.sparky.network.player.ConnectionManager;

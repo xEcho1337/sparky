@@ -21,6 +21,8 @@ import java.util.List;
  */
 public class MinecraftServer {
 
+    private static final MinecraftServer INSTANCE = new MinecraftServer();
+
     public static final double TICKS_PER_SECOND = 20.0;
     public static final double NANOS_BETWEEN_TICKS = (long) (1e9 / TICKS_PER_SECOND);
     public static final double MAX_CATCHUP_TICKS = 20;
@@ -39,6 +41,10 @@ public class MinecraftServer {
     private boolean running;
 
     public MinecraftServer() {
+        if (INSTANCE != null) {
+            throw new IllegalStateException("An instance of MinecraftServer already exists");
+        }
+
         this.config = new ServerConfig();
         this.networkManager = new NetworkManager(this);
         this.chunkProvider = new ChunkProvider();
@@ -80,6 +86,10 @@ public class MinecraftServer {
         loadedWorlds.add(world);
 
         logger.info("World '{}' created", world.getName());
+    }
+
+    public static MinecraftServer getInstance() {
+        return INSTANCE;
     }
 
     public boolean isRunning() {
