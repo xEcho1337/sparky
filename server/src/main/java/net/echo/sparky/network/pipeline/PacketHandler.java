@@ -1,5 +1,6 @@
 package net.echo.sparky.network.pipeline;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import net.echo.sparky.MinecraftServer;
@@ -28,6 +29,10 @@ public class PacketHandler extends SimpleChannelInboundHandler<Packet.Client> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext context, Packet.Client packet) {
+        Channel channel = context.channel();
+
+        if (channel == null || !channel.isOpen() || !channel.isActive()) return;
+
         PacketReceiveEvent event = new PacketReceiveEvent(packet);
 
         server.getEventHandler().call(event);

@@ -92,15 +92,18 @@ public class PlayerConnection {
 
         if (event.isCancelled()) return;
 
-        ChannelFuture future = channel.writeAndFlush(packet);
+        // Optimization - Flush can be expensive
+        if (callbacks.isEmpty()) {
+            channel.write(packet);
+        } else {
+            ChannelFuture future = channel.writeAndFlush(packet);
 
-        for (Runnable callback : callbacks) {
-            if (callback == null) continue;
+            for (Runnable callback : callbacks) {
+                if (callback == null) continue;
 
-            future.addListener(x -> callback.run());
+                future.addListener(x -> callback.run());
+            }
         }
-
-        future.addListener(FIRE_EXCEPTION_ON_FAILURE);
     }
 
     public void dispatchPacket(Packet.Server packet, Runnable callback) {
@@ -114,7 +117,6 @@ public class PlayerConnection {
         ChannelFuture future = channel.writeAndFlush(packet);
 
         future.addListener(x -> callback.run());
-
         future.addListener(FIRE_EXCEPTION_ON_FAILURE);
     }
 

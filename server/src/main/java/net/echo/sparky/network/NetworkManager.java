@@ -7,7 +7,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.AttributeKey;
 import io.netty.util.ResourceLeakDetector;
 import net.echo.sparky.MinecraftServer;
-import net.echo.sparky.network.pipeline.ChannelPipeline;
+import net.echo.sparky.network.pipeline.MinecraftPipeline;
 import net.echo.sparky.network.player.ConnectionManager;
 import net.echo.sparky.network.state.ConnectionState;
 
@@ -38,7 +38,7 @@ public class NetworkManager {
         this.networkChannel = new ServerBootstrap()
                 .group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new ChannelPipeline(this))
+                .childHandler(new MinecraftPipeline(this))
                 .bind(port)
                 .syncUninterruptibly();
 

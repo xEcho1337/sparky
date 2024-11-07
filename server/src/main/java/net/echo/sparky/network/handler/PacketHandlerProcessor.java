@@ -20,12 +20,15 @@ import net.echo.sparky.network.packet.server.play.*;
 import net.echo.sparky.network.player.PlayerConnection;
 import net.echo.sparky.network.state.ConnectionState;
 import net.echo.sparky.player.SparkyPlayer;
+import net.echo.sparky.utils.ThreadScheduleUtils;
 import net.echo.sparky.world.World;
 import net.echo.sparky.world.chunk.ChunkColumn;
 import net.echo.sparkyapi.enums.Difficulty;
 import net.echo.sparkyapi.enums.Dimension;
 import net.echo.sparkyapi.enums.GameMode;
 import net.echo.sparkyapi.enums.LevelType;
+import net.echo.sparkyapi.world.GameProfile;
+import net.echo.sparkyapi.world.Location;
 import net.echo.sparkyapi.world.RelativeFlag;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -69,7 +72,7 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
                 new ServerStatusResponse.Description(config.getMotd())
         );
 
-        connection.getChannel().writeAndFlush(response);
+        connection.flushPacket(response);
     }
 
     public void handleLoginStart(ClientLoginStart packet) {
@@ -81,11 +84,11 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
         if (event.isCancelled()) return;
 
         SparkyPlayer player = connection.getPlayer();
+        GameProfile profile = new GameProfile(event.getName(), event.getUuid());
 
-        player.setName(event.getName());
-        player.setUuid(event.getUuid());
+        player.setGameProfile(profile);
 
-        server.getLogger().info("{} ({}) logged in", event.getName(), connection.getChannel().remoteAddress());
+        // server.getLogger().info("{} ({}) logged in", event.getName(), connection.getChannel().remoteAddress());
 
         World world = server.getWorlds().getFirst();
 
@@ -148,7 +151,9 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
 
         SparkyPlayer player = connection.getPlayer();
 
-        TextComponent component = Component.text(String.format(event.getFormat(), player.getName(), event.getMessage()));
+        GameProfile profile = player.getGameProfile();
+
+        TextComponent component = Component.text(String.format(event.getFormat(), profile.getName(), event.getMessage()));
 
         server.schedule(() -> server.broadcast(component));
     }
@@ -162,10 +167,55 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
     }
 
     public void handlePosition(ClientPlayerPosition packet) {
+        if (!ThreadScheduleUtils.ensureMainThread(packet, this)) return;
 
+        SparkyPlayer player = connection.getPlayer();
+        Location location = player.getLocation();
+
+        double x = location.getX();
+        double y = location.getY();
+        double z = location.getZ();
+
+        double newX = packet.getX();
+        double newY = packet.getY();
+        double newZ = packet.getZ();
+
+        if (Double.isInfinite(newX) || Double.isNaN(newX)) {
+            connection.close(Component.text("Invalid position.").color(NamedTextColor.RED));
+            return;
+        }
+
+        if (Double.isInfinite(newY) || Double.isNaN(newY)) {
+            connection.close(Component.text("Invalid position.").color(NamedTextColor.RED));
+            return;
+        }
+
+        if (Double.isInfinite(newZ) || Double.isNaN(newZ)) {
+            connection.close(Component.text("Invalid position.").color(NamedTextColor.RED));
+            return;
+        }
+
+        double deltaX = Math.abs(newX - x);
+        double deltaY = Math.abs(newY - y);
+        double deltaZ = Math.abs(newZ - z);
+
+        double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+
+        // TODO: Check for teleports
+        if (distance > 3) {
+            player.teleport(new Location(location.getWorld(), x, y, z, location.getYaw(), location.getPitch()));
+        } else {
+            location.setX(newX);
+            location.setY(newY);
+            location.setZ(newZ);
+        }
     }
 
     public void handleLook(ClientPlayerLook packet) {
+        if (!ThreadScheduleUtils.ensureMainThread(packet, this)) return;
+
+        SparkyPlayer player = connection.getPlayer();
+
 
     }
 

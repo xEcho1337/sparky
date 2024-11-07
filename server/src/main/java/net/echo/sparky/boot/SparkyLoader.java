@@ -5,6 +5,7 @@ import net.echo.sparky.event.MinecraftEventHandler;
 import net.echo.sparky.event.impl.login.LoginEvent;
 import net.echo.sparky.world.generator.ChunkProvider;
 import net.echo.sparky.world.generator.unit.impl.FlatWorldGenerator;
+import net.echo.sparkyapi.world.GameProfile;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
@@ -19,7 +20,8 @@ public class SparkyLoader {
         MinecraftEventHandler eventHandler = server.getEventHandler();
 
         eventHandler.register(LoginEvent.class, event -> {
-            server.broadcast(Component.text("Hello, " + event.getPlayer().getName() + "!").color(NamedTextColor.YELLOW));
+            GameProfile profile = event.getPlayer().getGameProfile();
+            server.broadcast(Component.text("Hello, " + profile.getName() + "!").color(NamedTextColor.YELLOW));
         });
 
         server.start();

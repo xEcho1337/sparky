@@ -18,11 +18,11 @@
     </Appenders>
 
     <Loggers>
-        <Logger name="io.netty" level="DEBUG" additivity="false">
+        <!-- <Logger name="io.netty" level="DEBUG" additivity="false">
             <AppenderRef ref="Console"/>
-        </Logger>
+        </Logger> -->
 
-        <Root level="debug">
+        <Root level="info">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="RollingFileLogger"/>
         </Root>

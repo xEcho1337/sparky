@@ -26,6 +26,7 @@ public class ClientPluginMessage implements Packet.Client {
     @Override
     public void handle(PacketHandlerProcessor processor) {
         processor.handlePluginMessage(this);
+        data.release();
     }
 
     public String getChannel() {

@@ -1,7 +1,19 @@
 package net.echo.sparky.player;
 
+import net.echo.sparky.MinecraftServer;
+import net.echo.sparky.config.ServerConfig;
 import net.echo.sparky.network.packet.server.play.ServerChatMessage;
+import net.echo.sparky.network.packet.server.play.ServerPositionAndLook;
+import net.echo.sparky.network.packet.server.play.ServerRespawn;
 import net.echo.sparky.network.player.PlayerConnection;
+import net.echo.sparkyapi.enums.Difficulty;
+import net.echo.sparkyapi.enums.Dimension;
+import net.echo.sparkyapi.enums.GameMode;
+import net.echo.sparkyapi.enums.LevelType;
+import net.echo.sparkyapi.world.GameProfile;
+import net.echo.sparkyapi.world.Location;
+import net.echo.sparkyapi.world.RelativeFlag;
+import net.echo.sparkyapi.world.World;
 import net.kyori.adventure.text.TextComponent;
 
 import java.util.UUID;
@@ -10,8 +22,10 @@ public class SparkyPlayer {
 
     private final PlayerConnection connection;
 
-    private String name;
-    private UUID uuid;
+    private GameMode gameMode = GameMode.SURVIVAL;
+    private Location location = new Location();
+    private World world;
+    private GameProfile gameProfile;
     private long timeSinceLastKeepAlive;
     private int ticksAlive;
     private double health;
@@ -25,20 +39,62 @@ public class SparkyPlayer {
         return connection;
     }
 
-    public String getName() {
-        return name;
+    public GameMode getGameMode() {
+        return gameMode;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setGameMode(GameMode gameMode) {
+        this.gameMode = gameMode;
     }
 
-    public UUID getUuid() {
-        return uuid;
+    public Location getLocation() {
+        return location;
     }
 
-    public void setUuid(UUID uuid) {
-        this.uuid = uuid;
+    public void setLocation(Location location) {
+        this.location = location;
+    }
+
+    public World getWorld() {
+        return world;
+    }
+
+    public void teleport(Location location) {
+        if (location.getWorld() != world) {
+            ServerConfig config = MinecraftServer.getInstance().getConfig();
+            Difficulty difficulty = Difficulty.values()[config.getDifficulty()];
+
+            ServerRespawn respawn = new ServerRespawn(
+                    Dimension.OVERWORLD,
+                    difficulty,
+                    GameMode.SURVIVAL,
+                    LevelType.DEFAULT
+            );
+
+            connection.sendPacket(respawn);
+            world = location.getWorld();
+        }
+
+        ServerPositionAndLook teleport = new ServerPositionAndLook(
+                location.getX(),
+                location.getY(),
+                location.getZ(),
+                location.getYaw(),
+                location.getPitch(),
+                RelativeFlag.EMPTY
+        );
+
+        connection.sendPacket(teleport);
+
+        this.location = location;
+    }
+
+    public GameProfile getGameProfile() {
+        return gameProfile;
+    }
+
+    public void setGameProfile(GameProfile gameProfile) {
+        this.gameProfile = gameProfile;
     }
 
     public long getTimeSinceLastKeepAlive() {
