@@ -1,10 +1,8 @@
 package net.echo.sparky.network;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import net.echo.sparky.math.Vector3i;
 
-import java.io.IOException;
 import java.util.UUID;
 
 public class NetworkBuffer {

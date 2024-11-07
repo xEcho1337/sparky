@@ -3,7 +3,6 @@ package net.echo.sparky;
 import net.echo.sparky.config.ServerConfig;
 import net.echo.sparky.event.MinecraftEventHandler;
 import net.echo.sparky.network.NetworkManager;
-import net.echo.sparky.network.packet.server.play.ServerChatMessage;
 import net.echo.sparky.player.SparkyPlayer;
 import net.echo.sparky.tick.TickSchedulerThread;
 import net.echo.sparky.world.World;

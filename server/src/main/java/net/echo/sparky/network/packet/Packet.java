@@ -1,9 +1,7 @@
 package net.echo.sparky.network.packet;
 
-import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.handler.PacketHandlerProcessor;
-import net.echo.sparky.network.player.PlayerConnection;
 
 /**
  * Abstract reference to a Minecraft packet.

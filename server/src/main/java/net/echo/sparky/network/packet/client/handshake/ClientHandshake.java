@@ -1,15 +1,9 @@
 package net.echo.sparky.network.packet.client.handshake;
 
-import net.echo.sparky.MinecraftServer;
-import net.echo.sparky.event.Cancellable;
-import net.echo.sparky.event.impl.AsyncHandshakeEvent;
-import net.echo.sparky.event.impl.AsyncHandshakeEvent.*;
+import net.echo.sparky.event.impl.AsyncHandshakeEvent.HandshakeState;
 import net.echo.sparky.network.NetworkBuffer;
-import net.echo.sparky.network.NetworkManager;
 import net.echo.sparky.network.handler.PacketHandlerProcessor;
 import net.echo.sparky.network.packet.Packet;
-import net.echo.sparky.network.player.PlayerConnection;
-import net.echo.sparky.network.state.ConnectionState;
 
 public class ClientHandshake implements Packet.Client {
 

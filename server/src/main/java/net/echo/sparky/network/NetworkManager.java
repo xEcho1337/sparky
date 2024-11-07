@@ -1,28 +1,15 @@
 package net.echo.sparky.network;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.*;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.util.AttributeKey;
 import io.netty.util.ResourceLeakDetector;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import net.echo.sparky.MinecraftServer;
-import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.network.pipeline.ChannelPipeline;
-import net.echo.sparky.network.pipeline.PacketHandler;
-import net.echo.sparky.network.pipeline.inbound.MessageSplitter;
-import net.echo.sparky.network.pipeline.inbound.PacketDecoder;
-import net.echo.sparky.network.pipeline.outbound.MessageSerializer;
-import net.echo.sparky.network.pipeline.outbound.PacketEncoder;
 import net.echo.sparky.network.player.ConnectionManager;
 import net.echo.sparky.network.state.ConnectionState;
-
-import static io.netty.channel.ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE;
 
 public class NetworkManager {
 

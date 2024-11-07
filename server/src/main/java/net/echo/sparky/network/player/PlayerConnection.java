@@ -2,19 +2,17 @@ package net.echo.sparky.network.player;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import net.echo.sparky.network.NetworkManager;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.network.packet.server.login.ServerLoginDisconnect;
 import net.echo.sparky.network.packet.server.play.ServerDisconnect;
-import net.echo.sparky.network.packet.server.play.ServerJoinGame;
 import net.echo.sparky.network.state.ConnectionState;
 import net.echo.sparky.player.SparkyPlayer;
 import net.kyori.adventure.text.TextComponent;
-import org.apache.logging.log4j.core.util.ArrayUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 

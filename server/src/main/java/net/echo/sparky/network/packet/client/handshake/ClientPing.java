@@ -1,11 +1,8 @@
 package net.echo.sparky.network.packet.client.handshake;
 
-import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.handler.PacketHandlerProcessor;
 import net.echo.sparky.network.packet.Packet;
-import net.echo.sparky.network.packet.server.handshake.ServerPong;
-import net.echo.sparky.network.player.PlayerConnection;
 
 public class ClientPing implements Packet.Client {
 

@@ -1,10 +1,7 @@
 package net.echo.sparky.network.packet.client.play;
 
-import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.handler.PacketHandlerProcessor;
-import net.echo.sparky.network.player.PlayerConnection;
-import net.echo.sparky.utils.ThreadScheduleUtils;
 
 public class ClientPlayerPositionAndLook extends ClientPlayerIdle {
 

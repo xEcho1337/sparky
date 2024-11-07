@@ -1,9 +1,7 @@
 package net.echo.sparky.utils;
 
-import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.network.handler.PacketHandlerProcessor;
 import net.echo.sparky.network.packet.Packet;
-import net.echo.sparky.network.player.PlayerConnection;
 
 public class ThreadScheduleUtils {
 

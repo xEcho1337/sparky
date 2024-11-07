@@ -3,7 +3,6 @@ package net.echo.sparky.network.handler;
 import io.netty.util.Attribute;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.config.ServerConfig;
-import net.echo.sparky.event.Cancellable;
 import net.echo.sparky.event.impl.AsyncChatEvent;
 import net.echo.sparky.event.impl.AsyncHandshakeEvent;
 import net.echo.sparky.event.impl.AsyncPreLoginEvent;
@@ -34,9 +33,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
-
-import static net.echo.sparky.event.impl.AsyncHandshakeEvent.HandshakeState.LOGIN;
-import static net.echo.sparky.event.impl.AsyncHandshakeEvent.HandshakeState.STATUS;
 
 public class PacketHandlerProcessor {
 

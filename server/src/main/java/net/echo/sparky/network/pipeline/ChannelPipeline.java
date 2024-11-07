@@ -1,6 +1,5 @@
 package net.echo.sparky.network.pipeline;
 
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelConfig;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
