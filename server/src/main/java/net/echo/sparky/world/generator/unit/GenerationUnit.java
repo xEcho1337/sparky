@@ -1,18 +1,19 @@
 package net.echo.sparky.world.generator.unit;
 
-import net.echo.sparky.world.Block;
-import net.echo.sparky.world.World;
+import net.echo.sparkyapi.world.Block;
+import net.echo.sparky.world.SparkyWorld;
 import net.echo.sparky.world.chunk.ChunkColumn;
 import net.echo.sparky.world.chunk.ChunkSection;
+import net.echo.sparkyapi.world.chunk.Section;
 
 public class GenerationUnit {
 
-    private final World world;
+    private final SparkyWorld world;
 
     private static final int CHUNK_SIZE = 16;
     private static final int CHUNK_RANGE = 16;
 
-    public GenerationUnit(World world) {
+    public GenerationUnit(SparkyWorld world) {
         this.world = world;
     }
 
@@ -36,7 +37,7 @@ public class GenerationUnit {
         }
 
         for (int y = minHeight; y < maxHeight; y++) {
-            ChunkSection section = column.getSection(y >> 4);
+            Section section = column.getSection(y >> 4);
 
             fillSection(section, y & 15, block);
         }
@@ -44,7 +45,7 @@ public class GenerationUnit {
         world.addColumn(chunkX, chunkZ, column);
     }
 
-    private void fillSection(ChunkSection section, int y, Block block) {
+    private void fillSection(Section section, int y, Block block) {
         for (int x = 0; x < CHUNK_SIZE; x++) {
             for (int z = 0; z < CHUNK_SIZE; z++) {
                 section.setBlock(x, y, z, block);

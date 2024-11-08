@@ -6,6 +6,10 @@ import net.echo.sparky.network.packet.Packet;
 
 public class ClientStatus implements Packet.Client {
 
+    public enum Action {
+        PERFORM_RESPAWN, REQUEST_STATS, OPEN_INVENTORY
+    }
+
     private Action action;
 
     public ClientStatus() {
@@ -23,10 +27,6 @@ public class ClientStatus implements Packet.Client {
     @Override
     public void handle(PacketHandlerProcessor processor) {
         processor.handleStatus(this);
-    }
-
-    public enum Action {
-        PERFORM_RESPAWN, REQUEST_STATS, OPEN_INVENTORY
     }
 
     public Action getAction() {

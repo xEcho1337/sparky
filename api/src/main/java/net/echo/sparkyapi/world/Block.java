@@ -1,4 +1,4 @@
-package net.echo.sparky.world;
+package net.echo.sparkyapi.world;
 
 import java.util.HashMap;
 import java.util.Map;

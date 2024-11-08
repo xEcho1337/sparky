@@ -1,4 +1,4 @@
-package net.echo.sparkyapi.world;
+package net.echo.sparkyapi.player;
 
 import java.util.UUID;
 

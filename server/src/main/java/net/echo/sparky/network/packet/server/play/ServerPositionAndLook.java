@@ -2,7 +2,8 @@ package net.echo.sparky.network.packet.server.play;
 
 import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.packet.Packet;
-import net.echo.sparkyapi.world.RelativeFlag;
+import net.echo.sparkyapi.world.Location;
+import net.echo.sparkyapi.flags.impl.TeleportFlag;
 
 public class ServerPositionAndLook implements Packet.Server {
 
@@ -11,12 +12,16 @@ public class ServerPositionAndLook implements Packet.Server {
     private double z;
     private float yaw;
     private float pitch;
-    private RelativeFlag flags;
+    private TeleportFlag flags;
 
     public ServerPositionAndLook() {
     }
 
-    public ServerPositionAndLook(double x, double y, double z, float yaw, float pitch, RelativeFlag flags) {
+    public ServerPositionAndLook(Location location, TeleportFlag flags) {
+        this(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch(), flags);
+    }
+
+    public ServerPositionAndLook(double x, double y, double z, float yaw, float pitch, TeleportFlag flags) {
         this.x = x;
         this.y = y;
         this.z = z;

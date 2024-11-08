@@ -5,7 +5,7 @@ import net.echo.sparky.event.MinecraftEventHandler;
 import net.echo.sparky.network.NetworkManager;
 import net.echo.sparky.player.SparkyPlayer;
 import net.echo.sparky.tick.TickSchedulerThread;
-import net.echo.sparky.world.World;
+import net.echo.sparky.world.SparkyWorld;
 import net.echo.sparky.world.generator.ChunkProvider;
 import net.echo.sparky.world.generator.unit.GenerationUnit;
 import net.kyori.adventure.text.TextComponent;
@@ -36,7 +36,7 @@ public class MinecraftServer {
     private final TickSchedulerThread tickSchedulerThread;
 
     private final List<SparkyPlayer> playerList = new ArrayList<>();
-    private final List<World> loadedWorlds = new ArrayList<>();
+    private final List<SparkyWorld> loadedWorlds = new ArrayList<>();
 
     private boolean running;
 
@@ -79,7 +79,7 @@ public class MinecraftServer {
     private void generateDefaultWorld() {
         logger.info("No world was found, generating...");
 
-        World world = new World("world");
+        SparkyWorld world = new SparkyWorld("world");
         GenerationUnit unit = new GenerationUnit(world);
 
         chunkProvider.getUnit().accept(unit);
@@ -124,7 +124,7 @@ public class MinecraftServer {
         return playerList;
     }
 
-    public List<World> getWorlds() {
+    public List<SparkyWorld> getWorlds() {
         return loadedWorlds;
     }
 

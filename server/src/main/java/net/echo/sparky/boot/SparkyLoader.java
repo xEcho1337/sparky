@@ -5,7 +5,7 @@ import net.echo.sparky.event.MinecraftEventHandler;
 import net.echo.sparky.event.impl.login.LoginEvent;
 import net.echo.sparky.world.generator.ChunkProvider;
 import net.echo.sparky.world.generator.unit.impl.FlatWorldGenerator;
-import net.echo.sparkyapi.world.GameProfile;
+import net.echo.sparkyapi.player.GameProfile;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 

@@ -66,10 +66,10 @@ public class TickSchedulerThread extends Thread {
 
 
         for (SparkyPlayer player : server.getPlayerList()) {
-            long difference = System.currentTimeMillis() - player.getTimeSinceLastKeepAlive();
+            long difference = System.currentTimeMillis() - player.getLastKeepAlive();
 
             if (difference > 10 * 1000) {
-                player.setTimeSinceLastKeepAlive(now);
+                player.setLastKeepAlive(now);
                 player.getConnection().sendPacket(new ServerKeepAlive((int) (now % 10000000)));
             }
         }

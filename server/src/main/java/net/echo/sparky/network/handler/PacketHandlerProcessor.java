@@ -22,15 +22,15 @@ import net.echo.sparky.network.player.PlayerConnection;
 import net.echo.sparky.network.state.ConnectionState;
 import net.echo.sparky.player.SparkyPlayer;
 import net.echo.sparky.utils.ThreadScheduleUtils;
-import net.echo.sparky.world.World;
+import net.echo.sparky.world.SparkyWorld;
 import net.echo.sparky.world.chunk.ChunkColumn;
 import net.echo.sparkyapi.enums.Difficulty;
 import net.echo.sparkyapi.enums.Dimension;
 import net.echo.sparkyapi.enums.GameMode;
 import net.echo.sparkyapi.enums.LevelType;
-import net.echo.sparkyapi.world.GameProfile;
+import net.echo.sparkyapi.player.GameProfile;
 import net.echo.sparkyapi.world.Location;
-import net.echo.sparkyapi.world.RelativeFlag;
+import net.echo.sparkyapi.flags.impl.TeleportFlag;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -91,7 +91,7 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
 
         // server.getLogger().info("{} ({}) logged in", event.getName(), connection.getChannel().remoteAddress());
 
-        World world = server.getWorlds().getFirst();
+        SparkyWorld world = server.getWorlds().getFirst();
 
         if (world == null) {
             TextComponent reason = Component.text("No world found. Contact server administrators.").color(NamedTextColor.RED);
@@ -109,15 +109,17 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
 
         Difficulty difficulty = Difficulty.values()[config.getDifficulty()];
 
+        Location location = new Location(world, 0, 64, 0, 0, 0);
+
         connection.flushPacket(new ServerJoinGame(0, GameMode.CREATIVE, Dimension.NETHER, difficulty, config.getMaxPlayers(), LevelType.DEFAULT, false));
         connection.flushPacket(new ServerSpawnPosition(new Vector3i(0, 64, 0)));
-        connection.flushPacket(new ServerPositionAndLook(0, 64, 0, 0, 0, RelativeFlag.EMPTY));
+        connection.flushPacket(new ServerPositionAndLook(0, 64, 0, 0, 0, TeleportFlag.EMPTY));
 
         int renderDistance = config.getRenderDistance() / 2;
 
         for (int x = -renderDistance; x < renderDistance; x++) {
             for (int z = -renderDistance; z < renderDistance; z++) {
-                ChunkColumn column = world.getChunkAt(x, z);
+                ChunkColumn column = (ChunkColumn) world.getChunkAt(x, z);
 
                 if (column == null) continue;
 
@@ -151,7 +153,6 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
         if (event.isCancelled()) return;
 
         SparkyPlayer player = connection.getPlayer();
-
         GameProfile profile = player.getGameProfile();
 
         TextComponent component = Component.text(String.format(event.getFormat(), profile.getName(), event.getMessage()));
@@ -346,7 +347,7 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
 
             String brand = data.readString();
 
-            player.CLIENT_BRAND.setValue(brand);
+            player.setClientBrand(brand);
         }
     }
 }

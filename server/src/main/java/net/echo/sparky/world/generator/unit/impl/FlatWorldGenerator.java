@@ -1,6 +1,6 @@
 package net.echo.sparky.world.generator.unit.impl;
 
-import net.echo.sparky.world.Block;
+import net.echo.sparkyapi.world.Block;
 import net.echo.sparky.world.generator.unit.GenerationUnit;
 
 import java.util.function.Consumer;

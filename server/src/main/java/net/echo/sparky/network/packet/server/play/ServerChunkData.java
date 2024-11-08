@@ -4,6 +4,7 @@ import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.world.chunk.ChunkColumn;
 import net.echo.sparky.world.chunk.ChunkSection;
+import net.echo.sparkyapi.world.chunk.Section;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,10 +37,10 @@ public class ServerChunkData implements Packet.Server {
 
     public static Extracted extractData(ChunkColumn chunkColumn, boolean groundUpContinuous, int blockMask) {
         Extracted extracted = new Extracted();
-        List<ChunkSection> nonEmptySections = new ArrayList<>();
+        List<Section> nonEmptySections = new ArrayList<>();
 
         for (int y = 0; y < 16; y++) {
-            ChunkSection section = chunkColumn.getSection(y);
+            Section section = chunkColumn.getSection(y);
 
             if (section != null && (!groundUpContinuous || section.getNonAirBlocks() > 0) && (blockMask & 1 << y) != 0) {
                 extracted.dataSize |= 1 << y;
@@ -50,7 +51,7 @@ public class ServerChunkData implements Packet.Server {
         extracted.data = new byte[calculateDataSize(nonEmptySections.size(), false, groundUpContinuous)];
         int offset = 0;
 
-        for (ChunkSection section : nonEmptySections) {
+        for (Section section : nonEmptySections) {
             char[] data = section.getBlocks();
 
             for (char block : data) {
@@ -59,7 +60,7 @@ public class ServerChunkData implements Packet.Server {
             }
         }
 
-        for (ChunkSection section : nonEmptySections) {
+        for (Section section : nonEmptySections) {
             byte[] blockLightData = new byte[2048];
 
             Arrays.fill(blockLightData, (byte) 1);

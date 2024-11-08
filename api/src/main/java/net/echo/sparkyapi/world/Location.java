@@ -1,5 +1,7 @@
 package net.echo.sparkyapi.world;
 
+import net.echo.sparkyapi.math.Vector;
+
 public class Location extends Vector {
 
     private World world;

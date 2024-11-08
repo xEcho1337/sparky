@@ -3,33 +3,32 @@ package net.echo.sparky.network.packet.client.play;
 import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.handler.PacketHandlerProcessor;
 import net.echo.sparky.network.packet.Packet;
+import net.echo.sparkyapi.player.GameSettings;
 
 public class ClientSettings implements Packet.Client {
 
-    private String locale;
-    private byte viewDistance;
-    private ChatMode chatMode;
-    private boolean chatColors;
-    private byte skinParts;
+    private GameSettings settings;
 
     public ClientSettings() {
     }
 
-    public ClientSettings(String locale, byte viewDistance, ChatMode chatMode, boolean chatColors, byte skinParts) {
-        this.locale = locale;
-        this.viewDistance = viewDistance;
-        this.chatMode = chatMode;
-        this.chatColors = chatColors;
-        this.skinParts = skinParts;
+    public ClientSettings(GameSettings settings) {
+        this.settings = settings;
+    }
+
+    public ClientSettings(String locale, byte viewDistance, GameSettings.ChatMode chatMode, boolean chatColors, byte skinParts) {
+        this(new GameSettings(locale, chatMode, chatColors, viewDistance, skinParts));
     }
 
     @Override
     public void read(NetworkBuffer buffer) {
-        this.locale = buffer.readString();
-        this.viewDistance = buffer.readByte();
-        this.chatMode = ChatMode.values()[buffer.readVarInt()];
-        this.chatColors = buffer.readBoolean();
-        this.skinParts = buffer.readByte();
+        String locale = buffer.readString();
+        byte viewDistance = buffer.readByte();
+        GameSettings.ChatMode chatMode = GameSettings.ChatMode.values()[buffer.readVarInt()];
+        boolean chatColors = buffer.readBoolean();
+        byte skinParts = buffer.readByte();
+
+        this.settings = new GameSettings(locale, chatMode, chatColors, viewDistance, skinParts);
     }
 
     @Override
@@ -37,47 +36,11 @@ public class ClientSettings implements Packet.Client {
         processor.handleSettings(this);
     }
 
-    public enum ChatMode {
-        ENABLED, COMMANDS_ONLY, HIDDEN
+    public GameSettings getSettings() {
+        return settings;
     }
 
-    public String getLocale() {
-        return locale;
-    }
-
-    public void setLocale(String locale) {
-        this.locale = locale;
-    }
-
-    public byte getViewDistance() {
-        return viewDistance;
-    }
-
-    public void setViewDistance(byte viewDistance) {
-        this.viewDistance = viewDistance;
-    }
-
-    public ChatMode getChatMode() {
-        return chatMode;
-    }
-
-    public void setChatMode(ChatMode chatMode) {
-        this.chatMode = chatMode;
-    }
-
-    public boolean isChatColors() {
-        return chatColors;
-    }
-
-    public void setChatColors(boolean chatColors) {
-        this.chatColors = chatColors;
-    }
-
-    public byte getSkinParts() {
-        return skinParts;
-    }
-
-    public void setSkinParts(byte skinParts) {
-        this.skinParts = skinParts;
+    public void setSettings(GameSettings settings) {
+        this.settings = settings;
     }
 }

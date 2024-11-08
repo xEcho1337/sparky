@@ -6,34 +6,59 @@ import net.echo.sparky.network.packet.server.play.ServerChatMessage;
 import net.echo.sparky.network.packet.server.play.ServerPositionAndLook;
 import net.echo.sparky.network.packet.server.play.ServerRespawn;
 import net.echo.sparky.network.player.PlayerConnection;
-import net.echo.sparkyapi.attribute.Attribute;
 import net.echo.sparkyapi.enums.Difficulty;
 import net.echo.sparkyapi.enums.Dimension;
 import net.echo.sparkyapi.enums.GameMode;
 import net.echo.sparkyapi.enums.LevelType;
+import net.echo.sparkyapi.inventory.Inventory;
+import net.echo.sparkyapi.player.GameProfile;
+import net.echo.sparkyapi.flags.impl.TeleportFlag;
+import net.echo.sparkyapi.player.GameSettings;
 import net.echo.sparkyapi.world.*;
 import net.kyori.adventure.text.TextComponent;
-
-import java.util.UUID;
 
 public class SparkyPlayer {
 
     private final PlayerConnection connection;
     private final Inventory inventory = new Inventory();
 
-    public final Attribute<String> CLIENT_BRAND = new Attribute<>(null);
-    public final Attribute<Integer> TICKS_ALIVE = new Attribute<>(0);
-    public final Attribute<Double> HEALTH = new Attribute<>(20d);
-    public final Attribute<Double> FOOD = new Attribute<>(5d);
-
     private GameMode gameMode = GameMode.SURVIVAL;
     private Location location = new Location();
+    private GameSettings gameSettings;
     private GameProfile gameProfile;
     private World world;
-    private long timeSinceLastKeepAlive;
+    private String clientBrand;
+    private long lastKeepAlive;
+    private int ticksAlive = 0;
+    private double health = 20;
+    private double foodLevel = 5;
 
     public SparkyPlayer(PlayerConnection connection) {
         this.connection = connection;
+    }
+
+    public void sendMessage(TextComponent component) {
+        connection.sendPacket(new ServerChatMessage(component, ServerChatMessage.MessageType.CHAT));
+    }
+
+    public void teleport(Location location) {
+        MinecraftServer.getInstance().schedule(() -> {
+            if (location.getWorld() != world) {
+                ServerConfig config = MinecraftServer.getInstance().getConfig();
+                Difficulty difficulty = Difficulty.values()[config.getDifficulty()];
+
+                ServerRespawn respawn = new ServerRespawn(Dimension.OVERWORLD, difficulty, GameMode.SURVIVAL, LevelType.DEFAULT);
+
+                connection.sendPacket(respawn);
+                world = location.getWorld();
+            }
+
+            ServerPositionAndLook teleport = new ServerPositionAndLook(location, TeleportFlag.EMPTY);
+
+            connection.sendPacket(teleport);
+        });
+
+        this.location = location;
     }
 
     public PlayerConnection getConnection() {
@@ -57,41 +82,19 @@ public class SparkyPlayer {
     }
 
     public void setLocation(Location location) {
-        this.location = location;
+        teleport(location);
     }
 
-    public World getWorld() {
-        return world;
+    public GameSettings getGameSettings() {
+        return gameSettings;
     }
 
-    public void teleport(Location location) {
-        if (location.getWorld() != world) {
-            ServerConfig config = MinecraftServer.getInstance().getConfig();
-            Difficulty difficulty = Difficulty.values()[config.getDifficulty()];
-
-            ServerRespawn respawn = new ServerRespawn(
-                    Dimension.OVERWORLD,
-                    difficulty,
-                    GameMode.SURVIVAL,
-                    LevelType.DEFAULT
-            );
-
-            connection.sendPacket(respawn);
-            world = location.getWorld();
+    public void setGameSettings(GameSettings gameSettings) {
+        if (this.gameSettings != null) {
+            throw new IllegalStateException("Game settings already set!");
         }
 
-        ServerPositionAndLook teleport = new ServerPositionAndLook(
-                location.getX(),
-                location.getY(),
-                location.getZ(),
-                location.getYaw(),
-                location.getPitch(),
-                RelativeFlag.EMPTY
-        );
-
-        connection.sendPacket(teleport);
-
-        this.location = location;
+        this.gameSettings = gameSettings;
     }
 
     public GameProfile getGameProfile() {
@@ -102,15 +105,55 @@ public class SparkyPlayer {
         this.gameProfile = gameProfile;
     }
 
-    public long getTimeSinceLastKeepAlive() {
-        return timeSinceLastKeepAlive;
+    public World getWorld() {
+        return world;
     }
 
-    public void setTimeSinceLastKeepAlive(long timeSinceLastKeepAlive) {
-        this.timeSinceLastKeepAlive = timeSinceLastKeepAlive;
+    public void setWorld(World world) {
+        this.world = world;
     }
 
-    public void sendMessage(TextComponent component) {
-        connection.sendPacket(new ServerChatMessage(component, ServerChatMessage.MessageType.CHAT));
+    public String getClientBrand() {
+        return clientBrand;
+    }
+
+    public void setClientBrand(String clientBrand) {
+        if (this.clientBrand != null) {
+            throw new IllegalStateException("Client brand already set!");
+        }
+
+        this.clientBrand = clientBrand;
+    }
+
+    public long getLastKeepAlive() {
+        return lastKeepAlive;
+    }
+
+    public void setLastKeepAlive(long lastKeepAlive) {
+        this.lastKeepAlive = lastKeepAlive;
+    }
+
+    public int getTicksAlive() {
+        return ticksAlive;
+    }
+
+    public void setTicksAlive(int ticksAlive) {
+        this.ticksAlive = ticksAlive;
+    }
+
+    public double getHealth() {
+        return health;
+    }
+
+    public void setHealth(double health) {
+        this.health = health;
+    }
+
+    public double getFoodLevel() {
+        return foodLevel;
+    }
+
+    public void setFoodLevel(double foodLevel) {
+        this.foodLevel = foodLevel;
     }
 }

@@ -3,7 +3,7 @@ package net.echo.sparky.network.packet.client.play;
 import net.echo.sparky.network.NetworkBuffer;
 import net.echo.sparky.network.handler.PacketHandlerProcessor;
 import net.echo.sparky.network.packet.Packet;
-import net.echo.sparkyapi.world.PlayerAbilities;
+import net.echo.sparkyapi.flags.impl.PlayerAbilities;
 
 public class ClientPlayerAbilities implements Packet.Client {
 
