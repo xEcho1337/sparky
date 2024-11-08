@@ -4,6 +4,7 @@ import net.echo.sparkyapi.world.Block;
 import net.echo.sparky.world.SparkyWorld;
 import net.echo.sparky.world.chunk.ChunkColumn;
 import net.echo.sparky.world.chunk.ChunkSection;
+import net.echo.sparkyapi.world.chunk.Chunk;
 import net.echo.sparkyapi.world.chunk.Section;
 
 public class GenerationUnit {
@@ -30,7 +31,7 @@ public class GenerationUnit {
     }
 
     private void fillChunk(int chunkX, int chunkZ, int minHeight, int maxHeight, Block block) {
-        ChunkColumn column = world.getChunkAt(chunkX, chunkZ);
+        Chunk column = world.getChunkAt(chunkX, chunkZ);
 
         if (column == null) {
             column = new ChunkColumn(chunkX, chunkZ);
