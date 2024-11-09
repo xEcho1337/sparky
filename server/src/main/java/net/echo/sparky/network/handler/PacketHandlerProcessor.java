@@ -1,5 +1,6 @@
 package net.echo.sparky.network.handler;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.util.Attribute;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.config.ServerConfig;
@@ -37,8 +38,23 @@ import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection connection) {
+
+    private static final ExecutorService LOGIN_THREAD = Executors.newFixedThreadPool(6,
+            getThreadFactory("Async Login Thread - #%d"));
+    private static final ExecutorService CHAT_THREAD = Executors.newFixedThreadPool(6,
+            getThreadFactory("Async Chat Thread - #%d"));
+
+    private static ThreadFactory getThreadFactory(String name) {
+        return new ThreadFactoryBuilder()
+                .setDaemon(true)
+                .setNameFormat(name)
+                .build();
+    }
 
     public void handleHandshake(ClientHandshake packet) {
         AsyncHandshakeEvent event = new AsyncHandshakeEvent(
@@ -77,67 +93,69 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
     }
 
     public void handleLoginStart(ClientLoginStart packet) {
-        UUID uuid = UUID.nameUUIDFromBytes(packet.getName().getBytes(StandardCharsets.UTF_8));
-        AsyncPreLoginEvent event = new AsyncPreLoginEvent(packet.getName(), uuid);
+        LOGIN_THREAD.submit(() -> {
+            UUID uuid = UUID.nameUUIDFromBytes(packet.getName().getBytes(StandardCharsets.UTF_8));
+            AsyncPreLoginEvent event = new AsyncPreLoginEvent(packet.getName(), uuid);
 
-        server.getEventHandler().call(event);
+            server.getEventHandler().call(event);
 
-        if (event.isCancelled()) return;
+            if (event.isCancelled()) return;
 
-        SparkyPlayer player = connection.getPlayer();
-        GameProfile profile = new GameProfile(event.getName(), event.getUuid());
+            SparkyPlayer player = connection.getPlayer();
+            GameProfile profile = new GameProfile(event.getName(), event.getUuid());
 
-        player.setGameProfile(profile);
+            player.setGameProfile(profile);
 
-        // server.getLogger().info("{} ({}) logged in", event.getName(), connection.getChannel().remoteAddress());
+            // server.getLogger().info("{} ({}) logged in", event.getName(), connection.getChannel().remoteAddress());
 
-        SparkyWorld world = server.getWorlds().getFirst();
+            SparkyWorld world = server.getWorlds().getFirst();
 
-        if (world == null) {
-            TextComponent reason = Component.text("No world found. Contact server administrators.").color(NamedTextColor.RED);
-            connection.close(reason);
+            if (world == null) {
+                TextComponent reason = Component.text("No world found. Contact server administrators.").color(NamedTextColor.RED);
+                connection.close(reason);
 
-            return;
-        }
-
-        Attribute<ConnectionState> stateAttribute = connection.getChannel().attr(NetworkManager.CONNECTION_STATE);
-
-        connection.flushPacket(new ServerLoginSuccess(event.getUuid(), event.getName()));
-        stateAttribute.set(ConnectionState.PLAY);
-
-        ServerConfig config = server.getConfig();
-
-        Difficulty difficulty = Difficulty.values()[config.getDifficulty()];
-
-        Location location = new Location(world, 0, 64, 0, 0, 0);
-
-        connection.flushPacket(new ServerJoinGame(0, GameMode.CREATIVE, Dimension.NETHER, difficulty, config.getMaxPlayers(), LevelType.DEFAULT, false));
-        connection.flushPacket(new ServerSpawnPosition(new Vector3i(0, 64, 0)));
-        connection.flushPacket(new ServerPositionAndLook(0, 64, 0, 0, 0, TeleportFlag.EMPTY));
-
-        int renderDistance = config.getRenderDistance() / 2;
-
-        for (int x = -renderDistance; x < renderDistance; x++) {
-            for (int z = -renderDistance; z < renderDistance; z++) {
-                ChunkColumn column = (ChunkColumn) world.getChunkAt(x, z);
-
-                if (column == null) continue;
-
-                connection.flushPacket(new ServerChunkData(column, true));
+                return;
             }
-        }
 
-        server.schedule(() -> {
-            server.getPlayerList().add(player);
+            Attribute<ConnectionState> stateAttribute = connection.getChannel().attr(NetworkManager.CONNECTION_STATE);
 
-            LoginEvent.LoginResult result = new LoginEvent.LoginResult(LoginEvent.LoginResultType.ALLOWED, "");
-            LoginEvent loginEvent = new LoginEvent(player, result);
+            connection.flushPacket(new ServerLoginSuccess(event.getUuid(), event.getName()));
+            stateAttribute.set(ConnectionState.PLAY);
 
-            server.getEventHandler().call(loginEvent);
+            ServerConfig config = server.getConfig();
 
-            if (loginEvent.getResult().getType() == LoginEvent.LoginResultType.ALLOWED) return;
+            Difficulty difficulty = Difficulty.values()[config.getDifficulty()];
 
-            connection.close(Component.text(loginEvent.getResult().getReason()).color(NamedTextColor.RED));
+            Location location = new Location(world, 0, 64, 0, 0, 0);
+
+            connection.flushPacket(new ServerJoinGame(0, GameMode.CREATIVE, Dimension.NETHER, difficulty, config.getMaxPlayers(), LevelType.DEFAULT, false));
+            connection.flushPacket(new ServerSpawnPosition(new Vector3i(0, 0, 0)));
+            connection.flushPacket(new ServerPositionAndLook(0, 64, 0, 0, 0, TeleportFlag.EMPTY));
+
+            int renderDistance = config.getRenderDistance() / 2;
+
+            for (int x = -renderDistance; x < renderDistance; x++) {
+                for (int z = -renderDistance; z < renderDistance; z++) {
+                    ChunkColumn column = (ChunkColumn) world.getChunkAt(x, z);
+
+                    if (column == null) continue;
+
+                    connection.flushPacket(new ServerChunkData(column, true));
+                }
+            }
+
+            server.schedule(() -> {
+                server.getPlayerList().add(player);
+
+                LoginEvent.LoginResult result = new LoginEvent.LoginResult(LoginEvent.LoginResultType.ALLOWED, "");
+                LoginEvent loginEvent = new LoginEvent(player, result);
+
+                server.getEventHandler().call(loginEvent);
+
+                if (loginEvent.getResult().getType() == LoginEvent.LoginResultType.ALLOWED) return;
+
+                connection.close(Component.text(loginEvent.getResult().getReason()).color(NamedTextColor.RED));
+            });
         });
     }
 
@@ -146,18 +164,20 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
     }
 
     public void handleChatMessage(ClientChatMessage packet) {
-        AsyncChatEvent event = new AsyncChatEvent(packet.getMessage(), "<%s> %s");
+        CHAT_THREAD.submit(() -> {
+            AsyncChatEvent event = new AsyncChatEvent(packet.getMessage(), "<%s> %s");
 
-        server.getEventHandler().call(event);
+            server.getEventHandler().call(event);
 
-        if (event.isCancelled()) return;
+            if (event.isCancelled()) return;
 
-        SparkyPlayer player = connection.getPlayer();
-        GameProfile profile = player.getGameProfile();
+            SparkyPlayer player = connection.getPlayer();
+            GameProfile profile = player.getGameProfile();
 
-        TextComponent component = Component.text(String.format(event.getFormat(), profile.getName(), event.getMessage()));
+            TextComponent component = Component.text(String.format(event.getFormat(), profile.getName(), event.getMessage()));
 
-        server.schedule(() -> server.broadcast(component));
+            server.schedule(() -> server.broadcast(component));
+        });
     }
 
     public void handleUseEntity(ClientUseEntity packet) {

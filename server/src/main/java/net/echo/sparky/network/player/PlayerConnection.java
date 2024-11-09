@@ -128,7 +128,11 @@ public class PlayerConnection {
             return;
         }
 
-        channel.writeAndFlush(packet);
+        if (channel.eventLoop().inEventLoop()) {
+            channel.writeAndFlush(packet);
+        } else {
+            channel.eventLoop().execute(() -> channel.writeAndFlush(packet));
+        }
     }
 
     public Map<Packet.Server, List<Runnable>> getPacketQueue() {
