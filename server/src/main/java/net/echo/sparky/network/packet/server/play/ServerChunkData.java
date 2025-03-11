@@ -1,9 +1,8 @@
 package net.echo.sparky.network.packet.server.play;
 
-import net.echo.sparky.network.NetworkBuffer;
+import net.echo.server.NetworkBuffer;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.world.chunk.ChunkColumn;
-import net.echo.sparky.world.chunk.ChunkSection;
 import net.echo.sparkyapi.world.chunk.Section;
 
 import java.util.ArrayList;

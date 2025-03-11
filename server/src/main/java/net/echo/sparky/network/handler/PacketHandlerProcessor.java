@@ -2,6 +2,7 @@ package net.echo.sparky.network.handler;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.util.Attribute;
+import net.echo.server.attributes.Attribute;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.config.ServerConfig;
 import net.echo.sparky.event.impl.async.AsyncChatEvent;
@@ -9,7 +10,7 @@ import net.echo.sparky.event.impl.async.AsyncHandshakeEvent;
 import net.echo.sparky.event.impl.login.AsyncPreLoginEvent;
 import net.echo.sparky.event.impl.login.LoginEvent;
 import net.echo.sparky.math.Vector3i;
-import net.echo.sparky.network.NetworkBuffer;
+import net.echo.server.NetworkBuffer;
 import net.echo.sparky.network.NetworkManager;
 import net.echo.sparky.network.packet.client.handshake.ClientHandshake;
 import net.echo.sparky.network.packet.client.handshake.ClientPing;
@@ -106,7 +107,7 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
 
             player.setGameProfile(profile);
 
-            // server.getLogger().info("{} ({}) logged in", event.getName(), connection.getChannel().remoteAddress());
+            server.getLogger().info("{} ({}) logged in", event.getName(), connection.getChannel().remoteAddress());
 
             SparkyWorld world = server.getWorlds().getFirst();
 
@@ -117,15 +118,13 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
                 return;
             }
 
-            Attribute<ConnectionState> stateAttribute = connection.getChannel().attr(NetworkManager.CONNECTION_STATE);
+            Attribute<ConnectionState> stateAttribute = connection.getChannel().getAttribute(NetworkManager.CONNECTION_STATE);
 
             connection.flushPacket(new ServerLoginSuccess(event.getUuid(), event.getName()));
-            stateAttribute.set(ConnectionState.PLAY);
+            stateAttribute.setValue(ConnectionState.PLAY);
 
             ServerConfig config = server.getConfig();
-
             Difficulty difficulty = Difficulty.values()[config.getDifficulty()];
-
             Location location = new Location(world, 0, 64, 0, 0, 0);
 
             connection.flushPacket(new ServerJoinGame(0, GameMode.CREATIVE, Dimension.NETHER, difficulty, config.getMaxPlayers(), LevelType.DEFAULT, false));
@@ -154,7 +153,8 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
 
                 if (loginEvent.getResult().getType() == LoginEvent.LoginResultType.ALLOWED) return;
 
-                connection.close(Component.text(loginEvent.getResult().getReason()).color(NamedTextColor.RED));
+                TextComponent reason = Component.text(loginEvent.getResult().getReason());
+                connection.close(reason.color(NamedTextColor.RED));
             });
         });
     }
@@ -273,27 +273,13 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
         float yaw = packet.getYaw();
         float pitch = packet.getPitch();
 
-        if (Double.isInfinite(newX) || Double.isNaN(newX)) {
-            connection.close(Component.text("Invalid position.").color(NamedTextColor.RED));
-            return;
-        }
+        boolean invalidX = Double.isInfinite(newX) || Double.isNaN(newX);
+        boolean invalidY = Double.isInfinite(newY) || Double.isNaN(newY);
+        boolean invalidZ = Double.isInfinite(newZ) || Double.isNaN(newZ);
+        boolean invalidYaw = Double.isInfinite(yaw) || Double.isNaN(yaw);
+        boolean invalidPitch = Double.isInfinite(pitch) || Double.isNaN(pitch);
 
-        if (Double.isInfinite(newY) || Double.isNaN(newY)) {
-            connection.close(Component.text("Invalid position.").color(NamedTextColor.RED));
-            return;
-        }
-
-        if (Double.isInfinite(newZ) || Double.isNaN(newZ)) {
-            connection.close(Component.text("Invalid position.").color(NamedTextColor.RED));
-            return;
-        }
-
-        if (Double.isInfinite(yaw) || Double.isNaN(yaw)) {
-            connection.close(Component.text("Invalid position.").color(NamedTextColor.RED));
-            return;
-        }
-
-        if (Double.isInfinite(pitch) || Double.isNaN(pitch)) {
+        if (invalidX || invalidY || invalidZ || invalidYaw || invalidPitch) {
             connection.close(Component.text("Invalid position.").color(NamedTextColor.RED));
             return;
         }

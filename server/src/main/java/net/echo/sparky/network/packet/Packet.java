@@ -1,6 +1,6 @@
 package net.echo.sparky.network.packet;
 
-import net.echo.sparky.network.NetworkBuffer;
+import net.echo.server.NetworkBuffer;
 import net.echo.sparky.network.handler.PacketHandlerProcessor;
 
 /**

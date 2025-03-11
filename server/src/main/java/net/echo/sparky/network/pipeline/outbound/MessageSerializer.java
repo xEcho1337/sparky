@@ -1,19 +1,30 @@
 package net.echo.sparky.network.pipeline.outbound;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.MessageToByteEncoder;
-import net.echo.sparky.network.NetworkBuffer;
+import net.echo.server.NetworkBuffer;
+import net.echo.server.pipeline.transmitters.Transmitter;
+import net.echo.sparky.network.player.PlayerConnection;
 
-public class MessageSerializer extends MessageToByteEncoder<ByteBuf> {
+import java.io.IOException;
+
+import static net.echo.sparky.MinecraftServer.LOGGER;
+
+public class MessageSerializer implements Transmitter.Out<PlayerConnection, NetworkBuffer, Void> {
 
     @Override
-    protected void encode(ChannelHandlerContext ctx, ByteBuf buffer, ByteBuf out) {
+    public Void write(PlayerConnection connection, NetworkBuffer buffer) throws IOException {
         int length = buffer.readableBytes();
 
-        NetworkBuffer outBuffer = new NetworkBuffer(out);
+        NetworkBuffer outBuffer = new NetworkBuffer();
 
         outBuffer.writeVarInt(length);
-        outBuffer.writeBytes(buffer, buffer.readerIndex(), length);
+        outBuffer.writeBytes(buffer.getBuffer().array(), outBuffer.readableBytes(), length);
+
+        return null;
+    }
+
+    @Override
+    public void handleException(PlayerConnection connection, Exception exception) {
+        LOGGER.error(exception);
+        connection.getChannel().close();
     }
 }

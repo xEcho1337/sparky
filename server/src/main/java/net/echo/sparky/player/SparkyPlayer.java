@@ -42,9 +42,9 @@ public class SparkyPlayer {
     }
 
     public void teleport(Location location) {
-        MinecraftServer.getInstance().schedule(() -> {
+        MinecraftServer.INSTANCE.schedule(() -> {
             if (location.getWorld() != world) {
-                ServerConfig config = MinecraftServer.getInstance().getConfig();
+                ServerConfig config = MinecraftServer.INSTANCE.getConfig();
                 Difficulty difficulty = Difficulty.values()[config.getDifficulty()];
 
                 ServerRespawn respawn = new ServerRespawn(Dimension.OVERWORLD, difficulty, GameMode.SURVIVAL, LevelType.DEFAULT);

@@ -1,26 +1,28 @@
 package net.echo.sparky.network;
 
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.util.AttributeKey;
-import io.netty.util.ResourceLeakDetector;
+import net.echo.server.TcpServer;
+import net.echo.server.attributes.Attribute;
+import net.echo.server.bootstrap.Settings;
+import net.echo.server.channel.Channel;
+import net.echo.server.pipeline.Pipeline;
 import net.echo.sparky.MinecraftServer;
-import net.echo.sparky.network.pipeline.MinecraftPipeline;
+import net.echo.sparky.network.pipeline.PacketHandler;
+import net.echo.sparky.network.pipeline.inbound.MessageSplitter;
+import net.echo.sparky.network.pipeline.inbound.PacketDecoder;
+import net.echo.sparky.network.pipeline.outbound.MessageSerializer;
+import net.echo.sparky.network.pipeline.outbound.PacketEncoder;
 import net.echo.sparky.network.player.ConnectionManager;
+import net.echo.sparky.network.player.PlayerConnection;
 import net.echo.sparky.network.state.ConnectionState;
 
 public class NetworkManager {
 
-    public static final AttributeKey<ConnectionState> CONNECTION_STATE = AttributeKey.newInstance("connectionState");
+    public static final Attribute<ConnectionState> CONNECTION_STATE = new Attribute<>("connection_state");
 
     private final MinecraftServer server;
     private final ConnectionManager connectionManager;
 
-    private NioEventLoopGroup bossGroup;
-    private NioEventLoopGroup workerGroup;
-    private ChannelFuture networkChannel;
+    private TcpServer<PlayerConnection> tcpServer;
 
     public NetworkManager(MinecraftServer server) {
         this.server = server;
@@ -30,32 +32,31 @@ public class NetworkManager {
     public void start(int port) {
         int threads = server.getConfig().getNettyThreads();
 
-        this.bossGroup = new NioEventLoopGroup(threads);
-        this.workerGroup = new NioEventLoopGroup(threads);
+        Settings settings = new Settings().setThreads(8);
 
-        ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
+        tcpServer = new TcpServer<>(settings) {
+            @Override
+            public Pipeline<PlayerConnection> getPipeline() {
+                return new Pipeline<PlayerConnection>()
+                        .append(new MessageSplitter())
+                        .append(new PacketDecoder())
+                        .append(new PacketEncoder())
+                        .append(new MessageSerializer());
+            }
 
-        this.networkChannel = new ServerBootstrap()
-                .group(bossGroup, workerGroup)
-                .channel(NioServerSocketChannel.class)
-                .childHandler(new MinecraftPipeline(this))
-                .bind(port)
-                .syncUninterruptibly();
+            @Override
+            public PlayerConnection createConnection(Channel channel) {
+                return new PlayerConnection(channel);
+            }
+        };
+        tcpServer.start(port);
 
         server.getLogger().info("Opened network channel on port {} with {} threads", port, threads);
     }
 
     public void stop() {
         server.getLogger().info("Closing the network channel");
-
-        try {
-            this.networkChannel.channel().close().sync();
-        } catch (InterruptedException e) {
-            server.getLogger().error("Failed to close the network channel", e);
-        } finally {
-            bossGroup.shutdownGracefully();
-            workerGroup.shutdownGracefully();
-        }
+        tcpServer.stop();
     }
 
     public MinecraftServer getServer() {

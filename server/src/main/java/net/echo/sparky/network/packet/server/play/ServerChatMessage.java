@@ -1,6 +1,6 @@
 package net.echo.sparky.network.packet.server.play;
 
-import net.echo.sparky.network.NetworkBuffer;
+import net.echo.server.NetworkBuffer;
 import net.echo.sparky.network.packet.Packet;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;

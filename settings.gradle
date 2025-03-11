@@ -1,2 +1,3 @@
 rootProject.name = 'sparky'
-include 'api', 'server'
+include 'api', 'server', 'network'
+

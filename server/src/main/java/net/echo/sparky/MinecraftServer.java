@@ -21,14 +21,13 @@ import java.util.List;
  */
 public class MinecraftServer {
 
-    private static final MinecraftServer INSTANCE = new MinecraftServer();
-
+    public static final MinecraftServer INSTANCE = new MinecraftServer();
     public static final double TICKS_PER_SECOND = 20.0;
     public static final double NANOS_BETWEEN_TICKS = (long) (1e9 / TICKS_PER_SECOND);
     public static final double MAX_CATCHUP_TICKS = 20;
     public static final String CONFIG_FILE_NAME = "server.toml";
+    public static final Logger LOGGER = LogManager.getLogger(MinecraftServer.class);
 
-    private final Logger logger = LogManager.getLogger(MinecraftServer.class);
     private final ServerConfig config;
     private final NetworkManager networkManager;
     private final ChunkProvider chunkProvider;
@@ -60,12 +59,12 @@ public class MinecraftServer {
     }
 
     private void loadConfiguration() {
-        logger.info("Loading configuration file");
+        LOGGER.info("Loading configuration file");
         config.load(new File(CONFIG_FILE_NAME));
     }
 
     private void initializeServer() {
-        logger.info("Starting server on port {}", config.getPort());
+        LOGGER.info("Starting server on port {}", config.getPort());
 
         networkManager.start(config.getPort());
 
@@ -77,7 +76,7 @@ public class MinecraftServer {
     }
 
     private void generateDefaultWorld() {
-        logger.info("No world was found, generating...");
+        LOGGER.info("No world was found, generating...");
 
         SparkyWorld world = new SparkyWorld("world");
         GenerationUnit unit = new GenerationUnit(world);
@@ -85,7 +84,7 @@ public class MinecraftServer {
         chunkProvider.getUnit().accept(unit);
         loadedWorlds.add(world);
 
-        logger.info("World '{}' created", world.getName());
+        LOGGER.info("World '{}' created", world.getName());
     }
 
     public static MinecraftServer getInstance() {
@@ -97,7 +96,7 @@ public class MinecraftServer {
     }
 
     public Logger getLogger() {
-        return logger;
+        return LOGGER;
     }
 
     public ServerConfig getConfig() {

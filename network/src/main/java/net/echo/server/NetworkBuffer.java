@@ -1,68 +1,82 @@
-package net.echo.sparky.network;
+package net.echo.server;
 
-import io.netty.buffer.ByteBuf;
-import net.echo.sparky.math.Vector3i;
-
+import java.nio.ByteBuffer;
 import java.util.UUID;
 
 public class NetworkBuffer {
 
-    private final ByteBuf buffer;
+    private final ByteBuffer buffer;
 
-    public NetworkBuffer(ByteBuf buffer) {
+    public NetworkBuffer() {
+        this.buffer = ByteBuffer.allocate(1024);
+    }
+
+    public NetworkBuffer(ByteBuffer buffer) {
         this.buffer = buffer;
     }
 
+    public ByteBuffer getBuffer() {
+        return buffer;
+    }
+
+    public void mark() {
+        buffer.mark();
+    }
+
+    public void reset() {
+        buffer.reset();
+    }
+
     public byte readByte() {
-        return buffer.readByte();
+        return buffer.get();
     }
 
     public void writeByte(int value) {
-        buffer.writeByte(value);
+        buffer.put((byte) value);
     }
 
     public short readShort() {
-        return buffer.readShort();
+        return buffer.getShort();
     }
 
     public void writeShort(int value) {
-        buffer.writeShort(value);
+        buffer.putShort((short) value);
     }
 
     public int readUnsignedShort() {
-        return buffer.readUnsignedShort();
+        return Short.toUnsignedInt(buffer.getShort());
     }
 
     public int readInt() {
-        return buffer.readInt();
+        return buffer.getInt();
     }
 
     public void writeInt(int value) {
-        buffer.writeInt(value);
+        buffer.putInt(value);
     }
 
     public long readLong() {
-        return buffer.readLong();
+        return buffer.getLong();
     }
 
     public void writeLong(long value) {
-        buffer.writeLong(value);
+        buffer.putLong(value);
     }
 
     public float readFloat() {
-        return buffer.readFloat();
+        return buffer.getFloat();
     }
 
     public void writeFloat(float value) {
-        buffer.writeFloat(value);
+        buffer.putFloat(value);
     }
 
     public double readDouble() {
-        return buffer.readDouble();
+        return buffer.getDouble();
     }
 
     public void writeDouble(double value) {
-        buffer.writeDouble(value);
+        buffer.putDouble(value);
     }
 
     public String readString() {
@@ -73,7 +87,7 @@ public class NetworkBuffer {
         }
 
         byte[] bytes = new byte[length];
-        buffer.readBytes(bytes);
+        buffer.get(bytes);
 
         return new String(bytes);
     }
@@ -82,7 +96,7 @@ public class NetworkBuffer {
         byte[] bytes = value.getBytes();
 
         writeVarInt(bytes.length);
-        buffer.writeBytes(bytes);
+        buffer.put(bytes);
     }
 
     public int readVarInt() {
@@ -104,11 +118,11 @@ public class NetworkBuffer {
 
     public void writeVarInt(int value) {
         while ((value & 0xFFFFFF80) != 0L) {
-            buffer.writeByte((value & 0x7F) | 0x80);
+            writeByte((value & 0x7F) | 0x80);
             value >>>= 7;
         }
 
-        buffer.writeByte(value & 0x7F);
+        writeByte(value & 0x7F);
     }
 
     public long readVarLong() {
@@ -132,24 +146,16 @@ public class NetworkBuffer {
         writeByte((int) value);
     }
 
-    public void writeBytes(ByteBuf buffer) {
-        this.buffer.writeBytes(buffer);
-    }
-
     public void writeBytes(byte[] bytes) {
-        buffer.writeBytes(bytes);
+        buffer.put(bytes);
     }
 
-    public void release() {
-        buffer.release();
+    public void writeBytes(byte[] bytes, int index, int length) {
+        buffer.put(bytes, index, length);
     }
 
     public int readableBytes() {
-        return buffer.readableBytes();
-    }
-
-    public void writeBytes(ByteBuf buffer, int index, int length) {
-        this.buffer.writeBytes(buffer, index, length);
+        return buffer.remaining();
     }
 
     public void writeUUID(UUID uniqueId) {
@@ -162,29 +168,16 @@ public class NetworkBuffer {
     }
 
     public void writeBoolean(boolean value) {
-        buffer.writeBoolean(value);
-    }
-
-    public void writePosition(Vector3i position) {
-        int x = position.getX();
-        int y = position.getY();
-        int z = position.getZ();
-        buffer.writeLong(((long) (x & 0x3FFFFFF) << 38) | ((long) (z & 0x3FFFFFF) << 12) | (y & 0xFFF));
-    }
-
-    public Vector3i readPosition() {
-        long value = readLong();
-        int x = (int) (value >> 38);
-        int y = (int) (value << 52 >> 52);
-        int z = (int) (value << 26 >> 38);
-        return new Vector3i(x, y, z);
+        buffer.put((byte) (value ? 1 : 0));
     }
 
     public boolean readBoolean() {
-        return buffer.readBoolean();
+        return buffer.get() == 1;
     }
 
-    public ByteBuf readBytes(int size) {
-        return buffer.readBytes(size);
+    public byte[] readBytes(int size) {
+        byte[] bytes = new byte[size];
+        buffer.get(bytes);
+        return bytes;
     }
 }

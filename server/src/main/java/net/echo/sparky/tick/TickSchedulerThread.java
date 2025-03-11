@@ -64,7 +64,6 @@ public class TickSchedulerThread extends Thread {
         // TODO: Tick everything
         long now = System.currentTimeMillis();
 
-
         for (SparkyPlayer player : server.getPlayerList()) {
             long difference = System.currentTimeMillis() - player.getLastKeepAlive();
 
@@ -76,7 +75,13 @@ public class TickSchedulerThread extends Thread {
 
         scheduledTasks.clear();
 
+        long flushStart = System.nanoTime();
         flush();
+        long flushTook = System.nanoTime() - flushStart;
+
+        if (flushTook > 1_000_000) {
+            server.getLogger().warn("Took {} ms to flush", flushTook / 1e6);
+        }
 
         long took = System.nanoTime() - start;
 
@@ -94,13 +99,15 @@ public class TickSchedulerThread extends Thread {
         server.getEventHandler().call(preFlushEvent);
 
         for (PlayerConnection connection : connectionManager.getAll()) {
-            var entries = connection.getPacketQueue().entrySet();
+            connection.getChannel().eventLoop().execute(() -> {
+                var entries = connection.getPacketQueue().entrySet();
 
-            for (var entry : entries) {
-                connection.dispatchOnThread(entry.getKey(), entry.getValue());
-            }
+                for (var entry : entries) {
+                    connection.dispatchOnThread(entry.getKey(), entry.getValue());
+                }
 
-            connection.getPacketQueue().clear();
+                connection.getPacketQueue().clear();
+            });
         }
 
         AsyncPostFlushEvent postFlushEvent = new AsyncPostFlushEvent();
@@ -110,5 +117,9 @@ public class TickSchedulerThread extends Thread {
 
     public Queue<Runnable> getScheduledTasks() {
         return scheduledTasks;
+    }
+
+    public int getCurrentTick() {
+        return currentTick;
     }
 }

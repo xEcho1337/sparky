@@ -1,7 +1,6 @@
 package net.echo.sparky.network.player;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
+import net.echo.server.channel.Channel;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.event.impl.packet.PacketSendEvent;
 import net.echo.sparky.network.NetworkManager;
@@ -17,8 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import static io.netty.channel.ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE;
 
 public class PlayerConnection {
 
@@ -57,7 +54,7 @@ public class PlayerConnection {
     }
 
     public void close(TextComponent reason) {
-        ConnectionState state = channel.attr(NetworkManager.CONNECTION_STATE).get();
+        ConnectionState state = channel.getAttribute(NetworkManager.CONNECTION_STATE).getValue();
 
         Packet.Server packet = state == ConnectionState.LOGIN
                 ? new ServerLoginDisconnect(reason)

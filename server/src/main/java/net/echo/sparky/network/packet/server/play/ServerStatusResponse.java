@@ -2,7 +2,7 @@ package net.echo.sparky.network.packet.server.play;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import net.echo.sparky.network.NetworkBuffer;
+import net.echo.server.NetworkBuffer;
 import net.echo.sparky.network.packet.Packet;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
