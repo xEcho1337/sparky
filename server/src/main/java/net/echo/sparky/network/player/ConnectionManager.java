@@ -1,6 +1,6 @@
 package net.echo.sparky.network.player;
 
-import io.netty.channel.Channel;
+import net.echo.server.channel.Channel;
 
 import java.util.Collection;
 import java.util.Map;

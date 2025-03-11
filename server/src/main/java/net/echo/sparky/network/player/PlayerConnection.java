@@ -60,7 +60,7 @@ public class PlayerConnection {
                 ? new ServerLoginDisconnect(reason)
                 : new ServerDisconnect(reason);
 
-        if (channel.isOpen() && channel.isActive()) {
+        if (channel.isOpen()) {
             channel.writeAndFlush(packet);
         }
 
@@ -68,20 +68,15 @@ public class PlayerConnection {
     }
 
     public void dispatchOnThread(Packet.Server packet, List<Runnable> callbacks) {
-        if (channel.eventLoop().inEventLoop()) {
+        //if (channel.eventLoop().inEventLoop()) {
             dispatchPacket(packet, callbacks);
-        } else {
-            channel.eventLoop().execute(() -> dispatchPacket(packet, callbacks));
-        }
+        //} else {
+          //  channel.eventLoop().execute(() -> dispatchPacket(packet, callbacks));
+        //}
     }
 
     public void dispatchPacket(Packet.Server packet, List<Runnable> callbacks) {
-        if (channel == null) return;
-
-        if (!channel.isActive() || !channel.isOpen()) {
-            channel.close();
-            return;
-        }
+        if (channel == null || !channel.isOpen()) return;
 
         PacketSendEvent event = new PacketSendEvent(packet);
 
@@ -93,43 +88,25 @@ public class PlayerConnection {
         if (callbacks.isEmpty()) {
             channel.write(packet);
         } else {
-            ChannelFuture future = channel.writeAndFlush(packet);
-
-            for (Runnable callback : callbacks) {
-                if (callback == null) continue;
-
-                future.addListener(x -> callback.run());
-            }
+//            ChannelFuture future = channel.writeAndFlush(packet);
+//
+//            for (Runnable callback : callbacks) {
+//                if (callback == null) continue;
+//
+//                future.addListener(x -> callback.run());
+//            }
         }
-    }
-
-    public void dispatchPacket(Packet.Server packet, Runnable callback) {
-        if (channel == null) return;
-
-        if (!channel.isActive() || !channel.isOpen()) {
-            channel.close();
-            return;
-        }
-
-        ChannelFuture future = channel.writeAndFlush(packet);
-
-        future.addListener(x -> callback.run());
-        future.addListener(FIRE_EXCEPTION_ON_FAILURE);
     }
 
     public void flushPacket(Packet.Server packet) {
         if (channel == null) return;
 
-        if (!channel.isActive() || !channel.isOpen()) {
+        if (!channel.isOpen()) {
             channel.close();
             return;
         }
 
-        if (channel.eventLoop().inEventLoop()) {
-            channel.writeAndFlush(packet);
-        } else {
-            channel.eventLoop().execute(() -> channel.writeAndFlush(packet));
-        }
+        channel.writeAndFlush(packet);
     }
 
     public Map<Packet.Server, List<Runnable>> getPacketQueue() {

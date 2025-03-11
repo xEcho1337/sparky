@@ -1,5 +1,7 @@
 package net.echo.server;
 
+import net.echo.sparkyapi.math.Vector3i;
+
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
@@ -179,5 +181,20 @@ public class NetworkBuffer {
         byte[] bytes = new byte[size];
         buffer.get(bytes);
         return bytes;
+    }
+
+    public void writePosition(Vector3i position) {
+        int x = position.getX();
+        int y = position.getY();
+        int z = position.getZ();
+        writeLong(((long) (x & 0x3FFFFFF) << 38) | ((long) (z & 0x3FFFFFF) << 12) | (y & 0xFFF));
+    }
+
+    public Vector3i readPosition() {
+        long value = readLong();
+        int x = (int) (value >> 38);
+        int y = (int) (value << 52 >> 52);
+        int z = (int) (value << 26 >> 38);
+        return new Vector3i(x, y, z);
     }
 }

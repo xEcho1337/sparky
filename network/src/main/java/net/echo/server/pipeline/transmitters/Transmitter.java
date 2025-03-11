@@ -1,5 +1,7 @@
 package net.echo.server.pipeline.transmitters;
 
+import net.echo.server.channel.Channel;
+
 import java.io.IOException;
 
 public interface Transmitter<C> {

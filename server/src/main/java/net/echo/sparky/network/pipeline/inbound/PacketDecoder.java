@@ -1,6 +1,7 @@
 package net.echo.sparky.network.pipeline.inbound;
 
 import net.echo.server.NetworkBuffer;
+import net.echo.server.channel.Channel;
 import net.echo.server.pipeline.transmitters.Transmitter;
 import net.echo.sparky.network.NetworkManager;
 import net.echo.sparky.network.packet.Packet;

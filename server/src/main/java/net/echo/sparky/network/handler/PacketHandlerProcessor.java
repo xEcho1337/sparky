@@ -1,7 +1,6 @@
 package net.echo.sparky.network.handler;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import io.netty.util.Attribute;
 import net.echo.server.attributes.Attribute;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.config.ServerConfig;
@@ -9,7 +8,6 @@ import net.echo.sparky.event.impl.async.AsyncChatEvent;
 import net.echo.sparky.event.impl.async.AsyncHandshakeEvent;
 import net.echo.sparky.event.impl.login.AsyncPreLoginEvent;
 import net.echo.sparky.event.impl.login.LoginEvent;
-import net.echo.sparky.math.Vector3i;
 import net.echo.server.NetworkBuffer;
 import net.echo.sparky.network.NetworkManager;
 import net.echo.sparky.network.packet.client.handshake.ClientHandshake;
@@ -30,6 +28,7 @@ import net.echo.sparkyapi.enums.Difficulty;
 import net.echo.sparkyapi.enums.Dimension;
 import net.echo.sparkyapi.enums.GameMode;
 import net.echo.sparkyapi.enums.LevelType;
+import net.echo.sparkyapi.math.Vector3i;
 import net.echo.sparkyapi.player.GameProfile;
 import net.echo.sparkyapi.world.Location;
 import net.echo.sparkyapi.flags.impl.TeleportFlag;
@@ -74,7 +73,7 @@ public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection co
             case STATUS -> ConnectionState.STATUS;
         };
 
-        connection.getChannel().attr(NetworkManager.CONNECTION_STATE).set(nextConnectionState);
+        connection.getChannel().getAttribute(NetworkManager.CONNECTION_STATE).setValue(nextConnectionState);
     }
 
     public void handlePing(ClientPing packet) {

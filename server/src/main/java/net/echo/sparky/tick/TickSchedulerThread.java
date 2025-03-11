@@ -99,15 +99,13 @@ public class TickSchedulerThread extends Thread {
         server.getEventHandler().call(preFlushEvent);
 
         for (PlayerConnection connection : connectionManager.getAll()) {
-            connection.getChannel().eventLoop().execute(() -> {
-                var entries = connection.getPacketQueue().entrySet();
+            var entries = connection.getPacketQueue().entrySet();
 
-                for (var entry : entries) {
-                    connection.dispatchOnThread(entry.getKey(), entry.getValue());
-                }
+            for (var entry : entries) {
+                connection.dispatchOnThread(entry.getKey(), entry.getValue());
+            }
 
-                connection.getPacketQueue().clear();
-            });
+            connection.getPacketQueue().clear();
         }
 
         AsyncPostFlushEvent postFlushEvent = new AsyncPostFlushEvent();

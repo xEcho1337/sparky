@@ -1,6 +1,7 @@
 package net.echo.sparky.network.pipeline.outbound;
 
 import net.echo.server.NetworkBuffer;
+import net.echo.server.attributes.Attribute;
 import net.echo.server.pipeline.transmitters.Transmitter;
 import net.echo.sparky.network.NetworkManager;
 import net.echo.sparky.network.packet.Packet;
@@ -18,8 +19,8 @@ public class PacketEncoder implements Transmitter.Out<PlayerConnection, Packet.S
     public NetworkBuffer write(PlayerConnection connection, Packet.Server packet) throws IOException {
         NetworkBuffer packetBuffer = new NetworkBuffer();
 
-        ConnectionState state = connection.getChannel().getAttribute(NetworkManager.CONNECTION_STATE).getValue();
-        int packetId = state.getIdFromPacket(PacketOwnership.SERVER, packet);
+        Attribute<ConnectionState> attribute = connection.getChannel().getAttribute(NetworkManager.CONNECTION_STATE);
+        int packetId = attribute.getValue().getIdFromPacket(PacketOwnership.SERVER, packet);
 
         packetBuffer.writeVarInt(packetId);
         packet.write(packetBuffer);

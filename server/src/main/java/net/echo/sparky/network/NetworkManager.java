@@ -32,7 +32,7 @@ public class NetworkManager {
     public void start(int port) {
         int threads = server.getConfig().getNettyThreads();
 
-        Settings settings = new Settings().setThreads(8);
+        Settings settings = new Settings().setThreads(threads);
 
         tcpServer = new TcpServer<>(settings) {
             @Override

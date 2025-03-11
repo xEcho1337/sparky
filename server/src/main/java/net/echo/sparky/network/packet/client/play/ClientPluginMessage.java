@@ -20,13 +20,12 @@ public class ClientPluginMessage implements Packet.Client {
     @Override
     public void read(NetworkBuffer buffer) {
         this.channel = buffer.readString();
-        this.data = new NetworkBuffer(buffer.readBytes(buffer.readableBytes()));
+        this.data = new NetworkBuffer(buffer.getBuffer());
     }
 
     @Override
     public void handle(PacketHandlerProcessor processor) {
         processor.handlePluginMessage(this);
-        data.release();
     }
 
     public String getChannel() {

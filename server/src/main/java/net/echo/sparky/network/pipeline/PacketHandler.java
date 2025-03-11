@@ -1,8 +1,8 @@
 package net.echo.sparky.network.pipeline;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
+import net.echo.server.attributes.Attribute;
+import net.echo.server.channel.Channel;
+import net.echo.server.pipeline.transmitters.InboundHandler;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.event.impl.packet.PacketReceiveEvent;
 import net.echo.sparky.network.NetworkManager;
@@ -14,12 +14,12 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 
-public class PacketHandler extends SimpleChannelInboundHandler<Packet.Client> {
+import static net.echo.sparky.MinecraftServer.LOGGER;
+
+public class PacketHandler implements InboundHandler<PlayerConnection, Packet.Client> {
 
     private final NetworkManager networkManager;
     private final MinecraftServer server;
-
-    private PlayerConnection connection;
     private PacketHandlerProcessor processor;
 
     public PacketHandler(NetworkManager networkManager) {
@@ -28,48 +28,43 @@ public class PacketHandler extends SimpleChannelInboundHandler<Packet.Client> {
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext context, Packet.Client packet) {
-        Channel channel = context.channel();
-
-        if (channel == null || !channel.isOpen() || !channel.isActive()) return;
-
-        PacketReceiveEvent event = new PacketReceiveEvent(packet);
-
-        server.getEventHandler().call(event);
-
-        if (event.isCancelled()) return;
-
-        packet.handle(processor);
-    }
-
-    @Override
-    public void channelActive(ChannelHandlerContext context) {
-        this.connection = new PlayerConnection(context.channel());
+    public void onChannelConnect(PlayerConnection connection) {
         this.processor = new PacketHandlerProcessor(server, connection);
 
         networkManager.getConnectionManager().addConnection(connection);
 
-        context.channel().attr(NetworkManager.CONNECTION_STATE).set(ConnectionState.HANDSHAKING);
+        connection.getChannel().setAttribute(NetworkManager.CONNECTION_STATE);
+
+        Attribute<ConnectionState> state = connection.getChannel().getAttribute(NetworkManager.CONNECTION_STATE);
+
+        state.setValue(ConnectionState.HANDSHAKING);
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext context) {
-        if (connection == null) return;
-
+    public void onChannelDisconnect(PlayerConnection connection) {
         server.getPlayerList().remove(connection.getPlayer());
-
         networkManager.getConnectionManager().removeConnection(connection);
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext context, Throwable cause) {
-        if (cause.getMessage() == null) {
-            connection.close(Component.text("Unknown error").color(NamedTextColor.RED));
-            return;
-        }
+    public void read(PlayerConnection connection, Packet.Client input) {
+        Channel channel = connection.getChannel();
 
-        TextComponent reason = Component.text(cause.getMessage()).color(NamedTextColor.RED);
+        if (channel == null || !channel.isOpen()) return;
 
+        PacketReceiveEvent event = new PacketReceiveEvent(input);
+        server.getEventHandler().call(event);
+
+        if (event.isCancelled()) return;
+
+        input.handle(processor);
+    }
+
+    @Override
+    public void handleException(PlayerConnection connection, Exception exception) {
+        LOGGER.error(exception);
+
+        TextComponent reason = Component.text(exception.getMessage()).color(NamedTextColor.RED);
         connection.close(reason);
     }
 

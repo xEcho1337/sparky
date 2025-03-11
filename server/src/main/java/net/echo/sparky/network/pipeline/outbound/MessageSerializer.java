@@ -1,17 +1,19 @@
 package net.echo.sparky.network.pipeline.outbound;
 
 import net.echo.server.NetworkBuffer;
+import net.echo.server.channel.Channel;
 import net.echo.server.pipeline.transmitters.Transmitter;
 import net.echo.sparky.network.player.PlayerConnection;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import static net.echo.sparky.MinecraftServer.LOGGER;
 
-public class MessageSerializer implements Transmitter.Out<PlayerConnection, NetworkBuffer, Void> {
+public class MessageSerializer implements Transmitter.Out<PlayerConnection, NetworkBuffer, ByteBuffer> {
 
     @Override
-    public Void write(PlayerConnection connection, NetworkBuffer buffer) throws IOException {
+    public ByteBuffer write(PlayerConnection connection, NetworkBuffer buffer) throws IOException {
         int length = buffer.readableBytes();
 
         NetworkBuffer outBuffer = new NetworkBuffer();
@@ -19,7 +21,7 @@ public class MessageSerializer implements Transmitter.Out<PlayerConnection, Netw
         outBuffer.writeVarInt(length);
         outBuffer.writeBytes(buffer.getBuffer().array(), outBuffer.readableBytes(), length);
 
-        return null;
+        return outBuffer.getBuffer();
     }
 
     @Override

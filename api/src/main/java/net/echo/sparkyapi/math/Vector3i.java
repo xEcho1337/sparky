@@ -1,4 +1,4 @@
-package net.echo.sparky.math;
+package net.echo.sparkyapi.math;
 
 public class Vector3i implements Cloneable {
 

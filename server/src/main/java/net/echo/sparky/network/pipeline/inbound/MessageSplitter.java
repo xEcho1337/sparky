@@ -1,6 +1,7 @@
 package net.echo.sparky.network.pipeline.inbound;
 
 import net.echo.server.NetworkBuffer;
+import net.echo.server.channel.Channel;
 import net.echo.server.pipeline.transmitters.Transmitter.In;
 import net.echo.sparky.network.player.PlayerConnection;
 
@@ -13,6 +14,9 @@ public class MessageSplitter implements In<PlayerConnection, ByteBuffer, ByteBuf
     @Override
     public ByteBuffer read(PlayerConnection connection, ByteBuffer buffer) {
         NetworkBuffer networkBuffer = new NetworkBuffer(buffer);
+
+        if (networkBuffer.readableBytes() == 0) return null;
+
         networkBuffer.mark();
 
         byte[] bytes = new byte[3];
@@ -33,7 +37,7 @@ public class MessageSplitter implements In<PlayerConnection, ByteBuffer, ByteBuf
             }
         }
 
-        buffer.reset();
+        networkBuffer.reset();
         return null;
     }
 
