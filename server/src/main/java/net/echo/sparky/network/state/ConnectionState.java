@@ -1,8 +1,5 @@
 package net.echo.sparky.network.state;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import it.unimi.dsi.fastutil.Hash;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.network.packet.client.handshake.ClientHandshake;
 import net.echo.sparky.network.packet.client.handshake.ClientPing;
@@ -18,64 +15,75 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static net.echo.sparky.network.state.PacketOwnership.*;
+
 public enum ConnectionState {
 
     HANDSHAKING {
         {
-            PacketOwnership.CLIENT.register(0x00, ClientHandshake::new);
+            register(CLIENT, 0x00, ClientHandshake::new);
         }
     },
     STATUS {
         {
-            PacketOwnership.CLIENT.register(0x00, ClientStatusRequest::new);
-            PacketOwnership.CLIENT.register(0x01, ClientPing::new);
-            PacketOwnership.SERVER.register(0x00, ServerStatusResponse::new);
-            PacketOwnership.SERVER.register(0x01, ServerPong::new);
+            register(CLIENT, 0x00, ClientStatusRequest::new);
+            register(CLIENT, 0x01, ClientPing::new);
+            register(SERVER, 0x00, ServerStatusResponse::new);
+            register(SERVER, 0x01, ServerPong::new);
         }
     },
     LOGIN {
         {
-            PacketOwnership.CLIENT.register(0x00, ClientLoginStart::new);
-            PacketOwnership.SERVER.register(0x00, ServerLoginDisconnect::new);
-            PacketOwnership.SERVER.register(0x02, ServerLoginSuccess::new);
+            register(CLIENT, 0x00, ClientLoginStart::new);
+            register(SERVER, 0x00, ServerLoginDisconnect::new);
+            register(SERVER, 0x02, ServerLoginSuccess::new);
         }
     },
     PLAY {
         {
-            PacketOwnership.CLIENT.register(0x00, ClientKeepAlive::new);
-            PacketOwnership.CLIENT.register(0x01, ClientChatMessage::new);
-            PacketOwnership.CLIENT.register(0x02, ClientUseEntity::new);
-            PacketOwnership.CLIENT.register(0x03, ClientPlayerIdle::new);
-            PacketOwnership.CLIENT.register(0x04, ClientPlayerPosition::new);
-            PacketOwnership.CLIENT.register(0x05, ClientPlayerLook::new);
-            PacketOwnership.CLIENT.register(0x06, ClientPlayerPositionAndLook::new);
-            PacketOwnership.CLIENT.register(0x07, ClientPlayerDigging::new);
-            // PacketOwnership.CLIENT.register(0x08, ClientBlockPlacement::new);
-            PacketOwnership.CLIENT.register(0x09, ClientHeldItemChange::new);
-            PacketOwnership.CLIENT.register(0x0A, ClientArmSwing::new);
-            PacketOwnership.CLIENT.register(0x0B, ClientEntityAction::new);
-            PacketOwnership.CLIENT.register(0x13, ClientPlayerAbilities::new);
-            PacketOwnership.CLIENT.register(0x15, ClientSettings::new);
-            PacketOwnership.CLIENT.register(0x16, ClientStatus::new);
-            PacketOwnership.CLIENT.register(0x17, ClientPluginMessage::new);
+            register(CLIENT, 0x00, ClientKeepAlive::new);
+            register(CLIENT, 0x01, ClientChatMessage::new);
+            register(CLIENT, 0x02, ClientUseEntity::new);
+            register(CLIENT, 0x03, ClientPlayerIdle::new);
+            register(CLIENT, 0x04, ClientPlayerPosition::new);
+            register(CLIENT, 0x05, ClientPlayerLook::new);
+            register(CLIENT, 0x06, ClientPlayerPositionAndLook::new);
+            register(CLIENT, 0x07, ClientPlayerDigging::new);
+            // register(CLIENT, 0x08, ClientBlockPlacement::new);
+            register(CLIENT, 0x09, ClientHeldItemChange::new);
+            register(CLIENT, 0x0A, ClientArmSwing::new);
+            register(CLIENT, 0x0B, ClientEntityAction::new);
+            register(CLIENT, 0x13, ClientPlayerAbilities::new);
+            register(CLIENT, 0x15, ClientSettings::new);
+            register(CLIENT, 0x16, ClientStatus::new);
+            register(CLIENT, 0x17, ClientPluginMessage::new);
 
-            PacketOwnership.SERVER.register(0x00, ServerKeepAlive::new);
-            PacketOwnership.SERVER.register(0x01, ServerJoinGame::new);
+            register(SERVER, 0x00, ServerKeepAlive::new);
+            register(SERVER, 0x01, ServerJoinGame::new);
             
-            PacketOwnership.SERVER.register(0x01, ServerJoinGame::new);
-            PacketOwnership.SERVER.register(0x02, ServerChatMessage::new);
-            PacketOwnership.SERVER.register(0x03, ServerTimeUpdate::new);
-            PacketOwnership.SERVER.register(0x05, ServerSpawnPosition::new);
-            PacketOwnership.SERVER.register(0x06, ServerUpdateHealth::new);
-            PacketOwnership.SERVER.register(0x07, ServerRespawn::new);
-            PacketOwnership.SERVER.register(0x08, ServerPositionAndLook::new);
-            PacketOwnership.SERVER.register(0x21, ServerChunkData::new);
-            PacketOwnership.SERVER.register(0x40, ServerDisconnect::new);
+            register(SERVER, 0x01, ServerJoinGame::new);
+            register(SERVER, 0x02, ServerChatMessage::new);
+            register(SERVER, 0x03, ServerTimeUpdate::new);
+            register(SERVER, 0x05, ServerSpawnPosition::new);
+            register(SERVER, 0x06, ServerUpdateHealth::new);
+            register(SERVER, 0x07, ServerRespawn::new);
+            register(SERVER, 0x08, ServerPositionAndLook::new);
+            register(SERVER, 0x21, ServerChunkData::new);
+            register(SERVER, 0x40, ServerDisconnect::new);
         }
     };
 
+    private final Map<PacketOwnership, PacketRegistry> registryMap = new HashMap<>();
+
+    public <T extends Packet> void register(PacketOwnership ownership, int id, PacketFactory<T> packetFactory) {
+        PacketRegistry registry = new PacketRegistry();
+        registry.register(id, packetFactory);
+        registryMap.put(ownership, registry);
+    }
+    
     public Optional<Packet> getPacketFromId(PacketOwnership direction, int id) {
-        PacketFactory<? extends Packet> factory = direction.getFactoryMap().get(id);
+        PacketRegistry registry = registryMap.get(direction);
+        PacketFactory<? extends Packet> factory = registry.getFactoryMap().get(id);
 
         if (factory == null) return Optional.empty();
 
@@ -83,7 +91,7 @@ public enum ConnectionState {
     }
 
     public int getIdFromPacket(PacketOwnership direction, Packet packet) {
-        return direction.getPacketIdMap().get(packet.getClass());
+        return registryMap.get(direction).getPacketIdMap().get(packet.getClass());
     }
 }
 

@@ -2,6 +2,8 @@ package net.echo.server;
 
 import net.echo.server.bootstrap.Settings;
 import net.echo.server.channel.Channel;
+import net.echo.server.handlers.ConnectionHandler;
+import net.echo.server.handlers.MessageHandler;
 import net.echo.server.pipeline.Pipeline;
 import net.echo.server.pipeline.transmitters.Transmitter;
 import org.apache.logging.log4j.LogManager;
@@ -11,13 +13,12 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
-import java.nio.channels.AsynchronousSocketChannel;
-import java.nio.channels.CompletionHandler;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 public abstract class TcpServer<C> {
 
@@ -34,6 +35,26 @@ public abstract class TcpServer<C> {
         this.connectionMap = new HashMap<>();
         this.executor = Executors.newFixedThreadPool(settings.receiveThreads());
         this.pipeline = getPipeline();
+    }
+
+    public Map<Channel, C> getConnectionMap() {
+        return connectionMap;
+    }
+
+    public ExecutorService getExecutor() {
+        return executor;
+    }
+
+    public AsynchronousServerSocketChannel getServerChannel() {
+        return serverChannel;
+    }
+
+    public Pipeline<C> getCachedPipeline() {
+        return pipeline;
+    }
+
+    public boolean isRunning() {
+        return running;
     }
 
     public abstract Pipeline<C> getPipeline();
@@ -56,43 +77,13 @@ public abstract class TcpServer<C> {
         this.executor.shutdown();
     }
 
-    public boolean isRunning() {
-        return running;
-    }
+    public void handleClientMessages(Channel channel, C context) {
+        System.out.println("Waiting for a message");
 
-    private void handleClientMessages(Channel channel, C context) {
-        ByteBuffer buffer = ByteBuffer.allocate(1024 * 8);
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        buffer.clear();
 
-        channel.getSocketChannel().read(buffer, buffer, new CompletionHandler<>() {
-            @Override
-            public void completed(Integer result, ByteBuffer buffer) {
-                if (result == -1) {
-                    channel.close();
-                    return;
-                }
-
-                List<Transmitter<C>> transmitters = pipeline.getTransmitters();
-
-                Object input = buffer;
-
-                for (Transmitter<C> transmitter : transmitters) {
-                    if (!(transmitter instanceof Transmitter.In<C, ?, ?> in) || input == null) continue;
-
-                    try {
-                        input = in.readBasic(context, input);
-                    } catch (IOException e) {
-                        in.handleException(context, e);
-                    }
-                }
-
-                handleClientMessages(channel, context);
-            }
-
-            @Override
-            public void failed(Throwable throwable, ByteBuffer attachment) {
-                LOGGER.error(throwable);
-            }
-        });
+        channel.getSocketChannel().read(buffer, buffer, new MessageHandler<>(this, context, channel));
     }
 
     public void flush(Channel channel, List<Object> writeQueue) {
@@ -110,34 +101,14 @@ public abstract class TcpServer<C> {
             for (Transmitter<C> transmitter : transmitters) {
                 if (!(transmitter instanceof Transmitter.Out<C, ?, ?> out)) continue;
 
-                try {
-                    input = out.writeBasic(connection, input);
-                } catch (IOException e) {
-                    out.handleException(connection, e);
-                }
+                input = out.writeObject(connection, input);
             }
-
         }
     }
 
-    private record ConnectionHandler<T>(TcpServer<T> server)
-            implements CompletionHandler<AsynchronousSocketChannel, Object> {
-
-        @Override
-        public void completed(AsynchronousSocketChannel result, Object attachment) {
-            if (!server.running) return;
-
-            Channel channel = new Channel(server, result);
-            T context = server.createConnection(channel);
-
-            server.connectionMap.put(channel, context);
-            server.executor.submit(() -> server.handleClientMessages(channel, context));
-            server.serverChannel.accept(null, this);
-        }
-
-        @Override
-        public void failed(Throwable throwable, Object attachment) {
-            LOGGER.error(throwable);
+    public void forEachTransmitter(Consumer<Transmitter<C>> consumer) {
+        for (Transmitter<C> transmitter : pipeline.getTransmitters()) {
+            consumer.accept(transmitter);
         }
     }
 }

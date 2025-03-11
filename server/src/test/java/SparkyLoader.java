@@ -1,5 +1,3 @@
-package net.echo.sparky.boot;
-
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.event.MinecraftEventHandler;
 import net.echo.sparky.event.impl.login.LoginEvent;

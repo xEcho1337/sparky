@@ -44,9 +44,9 @@ import java.util.concurrent.ThreadFactory;
 
 public record PacketHandlerProcessor(MinecraftServer server, PlayerConnection connection) {
 
-    private static final ExecutorService LOGIN_THREAD = Executors.newFixedThreadPool(6,
+    private static final ExecutorService LOGIN_THREAD = Executors.newFixedThreadPool(2,
             getThreadFactory("Async Login Thread - #%d"));
-    private static final ExecutorService CHAT_THREAD = Executors.newFixedThreadPool(6,
+    private static final ExecutorService CHAT_THREAD = Executors.newFixedThreadPool(2,
             getThreadFactory("Async Chat Thread - #%d"));
 
     private static ThreadFactory getThreadFactory(String name) {

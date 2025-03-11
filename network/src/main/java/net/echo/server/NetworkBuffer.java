@@ -160,6 +160,10 @@ public class NetworkBuffer {
         return buffer.remaining();
     }
 
+    public int readableBytes(int size) {
+        return size - buffer.remaining();
+    }
+
     public void writeUUID(UUID uniqueId) {
         writeLong(uniqueId.getMostSignificantBits());
         writeLong(uniqueId.getLeastSignificantBits());

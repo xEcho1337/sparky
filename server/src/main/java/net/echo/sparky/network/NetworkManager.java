@@ -17,7 +17,7 @@ import net.echo.sparky.network.state.ConnectionState;
 
 public class NetworkManager {
 
-    public static final Attribute<ConnectionState> CONNECTION_STATE = new Attribute<>("connection_state");
+    public static final Attribute<ConnectionState> CONNECTION_STATE = Attribute.of("connection_state");
 
     private final MinecraftServer server;
     private final ConnectionManager connectionManager;
@@ -38,14 +38,18 @@ public class NetworkManager {
             @Override
             public Pipeline<PlayerConnection> getPipeline() {
                 return new Pipeline<PlayerConnection>()
-                        .append(new MessageSplitter())
-                        .append(new PacketDecoder())
-                        .append(new PacketEncoder())
-                        .append(new MessageSerializer());
+                        .addTransmitter(new MessageSplitter())
+                        .addTransmitter(new PacketDecoder())
+
+                        .addTransmitter(new PacketEncoder())
+                        .addTransmitter(new MessageSerializer())
+
+                        .addHandler(new PacketHandler(NetworkManager.this));
             }
 
             @Override
             public PlayerConnection createConnection(Channel channel) {
+                channel.setAttribute(CONNECTION_STATE, ConnectionState.HANDSHAKING);
                 return new PlayerConnection(channel);
             }
         };

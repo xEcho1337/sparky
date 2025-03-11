@@ -52,8 +52,11 @@ public class Channel {
         server.flush(this, writeQueue);
     }
 
-    public <T> void setAttribute(Attribute<T> attribute) {
-        attributeMap.put(attribute.getIdentifier(), attribute);
+    public <T> void setAttribute(Attribute<T> attribute, T value) {
+        Attribute<T> clone = attribute.copy();
+        clone.setValue(value);
+
+        attributeMap.put(attribute.getIdentifier(), clone);
     }
 
     public <T> Attribute<T> getAttribute(Attribute<T> attribute) {

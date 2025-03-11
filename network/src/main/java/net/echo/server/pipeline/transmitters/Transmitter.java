@@ -1,26 +1,35 @@
 package net.echo.server.pipeline.transmitters;
 
-import net.echo.server.channel.Channel;
-
 import java.io.IOException;
 
+@SuppressWarnings("all")
 public interface Transmitter<C> {
 
     void handleException(C connection, Exception exception);
 
     interface In<C, I, O> extends Transmitter<C> {
-        default Object readBasic(C connection, Object input) throws IOException {
-            return read(connection, (I) input);
-        }
-
         O read(C connection, I buffer) throws IOException;
+
+        default Object readObject(C connection, Object input) {
+            try {
+                return read(connection, (I) input);
+            } catch (Exception e) {
+                handleException(connection, e);
+                return null;
+            }
+        }
     }
 
     interface Out<C, I, O> extends Transmitter<C> {
-        default Object writeBasic(C connection, Object input) throws IOException {
-            return write(connection, (I) input);
-        }
-
         O write(C connection, I buffer) throws IOException;
+
+        default Object writeObject(C connection, Object input) {
+            try {
+                return write(connection, (I) input);
+            } catch (Exception e) {
+                handleException(connection, e);
+                return null;
+            }
+        }
     }
 }

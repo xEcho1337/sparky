@@ -21,6 +21,7 @@ public class PacketDecoder implements Transmitter.In<PlayerConnection, ByteBuffe
     public Packet.Client read(PlayerConnection connection, ByteBuffer buffer) throws IOException {
         NetworkBuffer packetBuffer = new NetworkBuffer(buffer);
 
+        System.out.println("Readable bytes: " + packetBuffer.readableBytes());
         int id = packetBuffer.readVarInt();
 
         ConnectionState state = connection.getChannel().getAttribute(NetworkManager.CONNECTION_STATE).getValue();
@@ -35,7 +36,7 @@ public class PacketDecoder implements Transmitter.In<PlayerConnection, ByteBuffe
 
         if (packetBuffer.readableBytes() > 0) {
             throw new IOException(String.format("Packet %s/%d (%s) was larger than expected, found %d bytes extra whilst reading packet %d",
-                    state.name(), id, packet.getClass().getSimpleName(), packetBuffer.readableBytes(), id));
+                    state.name(), id, packetClient.getClass().getSimpleName(), packetBuffer.readableBytes(), id));
         }
 
         return packetClient;
