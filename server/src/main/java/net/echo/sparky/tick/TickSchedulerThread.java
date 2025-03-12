@@ -3,10 +3,6 @@ package net.echo.sparky.tick;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.event.impl.async.AsyncPostFlushEvent;
 import net.echo.sparky.event.impl.async.AsyncPreFlushEvent;
-import net.echo.sparky.network.NetworkManager;
-import net.echo.sparky.network.packet.server.play.ServerKeepAlive;
-import net.echo.sparky.network.player.ConnectionManager;
-import net.echo.sparky.network.player.PlayerConnection;
 import net.echo.sparky.player.SparkyPlayer;
 
 import java.util.Queue;
@@ -27,9 +23,10 @@ public class TickSchedulerThread extends Thread {
 
     @Override
     public void run() {
-        long tickDelay = (long) MinecraftServer.NANOS_BETWEEN_TICKS;
-        long lastTickBalance = System.nanoTime();
+        long ticksPerSecond = server.getConfig().getTickRate();
+        long tickDelay = (long) (1e9 / ticksPerSecond);
 
+        long lastTickBalance = System.nanoTime();
         double maxCatchupNanos = MinecraftServer.MAX_CATCHUP_TICKS * tickDelay;
 
         while (server.isRunning()) {
@@ -62,15 +59,9 @@ public class TickSchedulerThread extends Thread {
         }
 
         // TODO: Tick everything
-        long now = System.currentTimeMillis();
-
         for (SparkyPlayer player : server.getPlayerList()) {
-            long difference = System.currentTimeMillis() - player.getLastKeepAlive();
+            player.tick();
 
-            if (difference > 10 * 1000) {
-                player.setLastKeepAlive(now);
-                player.getConnection().sendPacket(new ServerKeepAlive((int) (now % 10000000)));
-            }
         }
 
         scheduledTasks.clear();
@@ -91,21 +82,12 @@ public class TickSchedulerThread extends Thread {
     }
 
     private void flush() {
-        NetworkManager networkManager = server.getNetworkManager();
-        ConnectionManager connectionManager = networkManager.getConnectionManager();
-
         AsyncPreFlushEvent preFlushEvent = new AsyncPreFlushEvent();
 
         server.getEventHandler().call(preFlushEvent);
 
-        for (PlayerConnection connection : connectionManager.getAll()) {
-            var entries = connection.getPacketQueue().entrySet();
-
-            for (var entry : entries) {
-                connection.dispatchOnThread(entry.getKey(), entry.getValue());
-            }
-
-            connection.getPacketQueue().clear();
+        for (SparkyPlayer player : server.getPlayerList()) {
+            player.getConnection().getChannel().flushQueue();
         }
 
         AsyncPostFlushEvent postFlushEvent = new AsyncPostFlushEvent();

@@ -1,7 +1,7 @@
 package net.echo.sparky.network.packet.client.play;
 
-import net.echo.server.NetworkBuffer;
-import net.echo.sparky.network.handler.PacketHandlerProcessor;
+import net.echo.server.buffer.NetworkBuffer;
+import net.echo.sparky.network.handler.PacketProcessor;
 
 public class ClientPlayerPosition extends ClientPlayerIdle {
 
@@ -28,7 +28,7 @@ public class ClientPlayerPosition extends ClientPlayerIdle {
     }
 
     @Override
-    public void handle(PacketHandlerProcessor processor) {
+    public void handle(PacketProcessor processor) {
         processor.handlePosition(this);
     }
 

@@ -1,6 +1,6 @@
 package net.echo.sparky.network.packet.server.play;
 
-import net.echo.server.NetworkBuffer;
+import net.echo.server.buffer.NetworkBuffer;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.world.chunk.ChunkColumn;
 import net.echo.sparkyapi.world.chunk.Section;
@@ -47,7 +47,7 @@ public class ServerChunkData implements Packet.Server {
             }
         }
 
-        extracted.data = new byte[calculateDataSize(nonEmptySections.size(), false, groundUpContinuous)];
+        extracted.data = new byte[calculateDataSize(nonEmptySections.size(), true, groundUpContinuous)];
         int offset = 0;
 
         for (Section section : nonEmptySections) {

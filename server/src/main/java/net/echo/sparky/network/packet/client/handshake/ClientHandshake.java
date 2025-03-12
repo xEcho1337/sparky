@@ -1,8 +1,8 @@
 package net.echo.sparky.network.packet.client.handshake;
 
 import net.echo.sparky.event.impl.async.AsyncHandshakeEvent.HandshakeState;
-import net.echo.server.NetworkBuffer;
-import net.echo.sparky.network.handler.PacketHandlerProcessor;
+import net.echo.server.buffer.NetworkBuffer;
+import net.echo.sparky.network.handler.PacketProcessor;
 import net.echo.sparky.network.packet.Packet;
 
 public class ClientHandshake implements Packet.Client {
@@ -24,7 +24,7 @@ public class ClientHandshake implements Packet.Client {
     }
 
     @Override
-    public void handle(PacketHandlerProcessor processor) {
+    public void handle(PacketProcessor processor) {
         processor.handleHandshake(this);
     }
 

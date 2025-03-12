@@ -1,7 +1,6 @@
 package net.echo.sparky.network.pipeline.inbound;
 
-import net.echo.server.NetworkBuffer;
-import net.echo.server.channel.Channel;
+import net.echo.server.buffer.NetworkBuffer;
 import net.echo.server.pipeline.transmitters.Transmitter;
 import net.echo.sparky.network.NetworkManager;
 import net.echo.sparky.network.packet.Packet;
@@ -10,19 +9,15 @@ import net.echo.sparky.network.state.ConnectionState;
 import net.echo.sparky.network.state.PacketOwnership;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Optional;
 
 import static net.echo.sparky.MinecraftServer.LOGGER;
 
-public class PacketDecoder implements Transmitter.In<PlayerConnection, ByteBuffer, Packet.Client> {
+public class PacketDecoder implements Transmitter.In<PlayerConnection, NetworkBuffer, Packet.Client> {
 
     @Override
-    public Packet.Client read(PlayerConnection connection, ByteBuffer buffer) throws IOException {
-        NetworkBuffer packetBuffer = new NetworkBuffer(buffer);
-
-        System.out.println("Readable bytes: " + packetBuffer.readableBytes());
-        int id = packetBuffer.readVarInt();
+    public Packet.Client read(PlayerConnection connection, NetworkBuffer buffer) throws IOException {
+        int id = buffer.readVarInt();
 
         ConnectionState state = connection.getChannel().getAttribute(NetworkManager.CONNECTION_STATE).getValue();
         Optional<Packet> packet = state.getPacketFromId(PacketOwnership.CLIENT, id);
@@ -32,11 +27,11 @@ public class PacketDecoder implements Transmitter.In<PlayerConnection, ByteBuffe
         }
 
         Packet.Client packetClient = (Packet.Client) packet.get();
-        packetClient.read(packetBuffer);
+        packetClient.read(buffer);
 
-        if (packetBuffer.readableBytes() > 0) {
+        if (buffer.remaining() > 0) {
             throw new IOException(String.format("Packet %s/%d (%s) was larger than expected, found %d bytes extra whilst reading packet %d",
-                    state.name(), id, packetClient.getClass().getSimpleName(), packetBuffer.readableBytes(), id));
+                    state.name(), id, packetClient.getClass().getSimpleName(), buffer.remaining(), id));
         }
 
         return packetClient;

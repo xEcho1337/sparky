@@ -1,7 +1,6 @@
 package net.echo.sparky.network.pipeline.outbound;
 
-import net.echo.server.NetworkBuffer;
-import net.echo.server.channel.Channel;
+import net.echo.server.buffer.NetworkBuffer;
 import net.echo.server.pipeline.transmitters.Transmitter;
 import net.echo.sparky.network.player.PlayerConnection;
 
@@ -14,19 +13,24 @@ public class MessageSerializer implements Transmitter.Out<PlayerConnection, Netw
 
     @Override
     public ByteBuffer write(PlayerConnection connection, NetworkBuffer buffer) throws IOException {
-        int length = buffer.readableBytes();
+        buffer.getBuffer().flip();
+        int length = buffer.remaining();
 
-        NetworkBuffer outBuffer = new NetworkBuffer();
-
+        NetworkBuffer outBuffer = new NetworkBuffer(ByteBuffer.allocate(length + 5));
         outBuffer.writeVarInt(length);
-        outBuffer.writeBytes(buffer.getBuffer().array(), outBuffer.readableBytes(), length);
 
-        return outBuffer.getBuffer();
+        byte[] data = buffer.getBuffer().array();
+        outBuffer.writeBytes(data, 0, length);
+
+        ByteBuffer result = outBuffer.getBuffer();
+        result.flip();
+
+        return result;
     }
 
     @Override
     public void handleException(PlayerConnection connection, Exception exception) {
-        LOGGER.error(exception);
+        LOGGER.error("Exception serializing!", exception);
         connection.getChannel().close();
     }
 }

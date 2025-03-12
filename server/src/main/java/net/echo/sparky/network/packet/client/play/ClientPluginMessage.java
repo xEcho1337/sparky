@@ -1,7 +1,7 @@
 package net.echo.sparky.network.packet.client.play;
 
-import net.echo.server.NetworkBuffer;
-import net.echo.sparky.network.handler.PacketHandlerProcessor;
+import net.echo.server.buffer.NetworkBuffer;
+import net.echo.sparky.network.handler.PacketProcessor;
 import net.echo.sparky.network.packet.Packet;
 
 public class ClientPluginMessage implements Packet.Client {
@@ -20,11 +20,21 @@ public class ClientPluginMessage implements Packet.Client {
     @Override
     public void read(NetworkBuffer buffer) {
         this.channel = buffer.readString();
-        this.data = new NetworkBuffer(buffer.getBuffer());
+        int length = buffer.remaining();
+
+        byte[] data = new byte[length];
+        buffer.getBuffer().get(data, 0, data.length);
+
+        NetworkBuffer networkBuffer = new NetworkBuffer(length);
+
+        networkBuffer.writeBytes(data);
+        networkBuffer.getBuffer().flip();
+
+        this.data = networkBuffer;
     }
 
     @Override
-    public void handle(PacketHandlerProcessor processor) {
+    public void handle(PacketProcessor processor) {
         processor.handlePluginMessage(this);
     }
 

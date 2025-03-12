@@ -15,18 +15,18 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /**
- * The main server instance. Everything starts here.
+ * The implementation of the Minecraft server.
  */
 public class MinecraftServer {
 
     public static final MinecraftServer INSTANCE = new MinecraftServer();
-    public static final double TICKS_PER_SECOND = 20.0;
-    public static final double NANOS_BETWEEN_TICKS = (long) (1e9 / TICKS_PER_SECOND);
-    public static final double MAX_CATCHUP_TICKS = 20;
-    public static final String CONFIG_FILE_NAME = "server.toml";
     public static final Logger LOGGER = LogManager.getLogger(MinecraftServer.class);
+
+    public static final String CONFIG_FILE_NAME = getProperty("config-file", "server.toml", String::valueOf);
+    public static final int MAX_CATCHUP_TICKS = getProperty("max-catchup-ticks", "20", Integer::parseInt);
 
     private final ServerConfig config;
     private final NetworkManager networkManager;
@@ -35,9 +35,9 @@ public class MinecraftServer {
     private final TickSchedulerThread tickSchedulerThread;
 
     private final List<SparkyPlayer> playerList = new ArrayList<>();
-    private final List<SparkyWorld> loadedWorlds = new ArrayList<>();
+    private final List<SparkyWorld> worldList = new ArrayList<>();
 
-    private boolean running;
+    private volatile boolean running;
 
     public MinecraftServer() {
         if (INSTANCE != null) {
@@ -51,11 +51,17 @@ public class MinecraftServer {
         this.tickSchedulerThread = new TickSchedulerThread(this);
     }
 
+    public static <T> T getProperty(String name, String defaultValue, Function<String, T> remapper) {
+        return remapper.apply(System.getProperty(name, defaultValue));
+    }
+
     public void start() {
         this.running = true;
 
-        loadConfiguration();
-        initializeServer();
+        new Thread(() -> {
+            loadConfiguration();
+            initializeServer();
+        }, "Main").start();
     }
 
     private void loadConfiguration() {
@@ -68,7 +74,7 @@ public class MinecraftServer {
 
         networkManager.start(config.getPort());
 
-        if (loadedWorlds.isEmpty()) {
+        if (worldList.isEmpty()) {
             generateDefaultWorld();
         }
 
@@ -76,15 +82,15 @@ public class MinecraftServer {
     }
 
     private void generateDefaultWorld() {
-        LOGGER.info("No world was found, generating...");
+        LOGGER.info("Generating the default world...");
 
         SparkyWorld world = new SparkyWorld("world");
         GenerationUnit unit = new GenerationUnit(world);
 
         chunkProvider.getUnit().accept(unit);
-        loadedWorlds.add(world);
+        worldList.add(world);
 
-        LOGGER.info("World '{}' created", world.getName());
+        LOGGER.info("Generated world '{}'", world.getName());
     }
 
     public static MinecraftServer getInstance() {
@@ -124,7 +130,7 @@ public class MinecraftServer {
     }
 
     public List<SparkyWorld> getWorlds() {
-        return loadedWorlds;
+        return worldList;
     }
 
     public void broadcast(TextComponent message) {

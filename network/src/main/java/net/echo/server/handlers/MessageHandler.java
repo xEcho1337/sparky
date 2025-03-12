@@ -1,5 +1,6 @@
 package net.echo.server.handlers;
 
+import net.echo.server.buffer.NetworkBuffer;
 import net.echo.server.TcpServer;
 import net.echo.server.channel.Channel;
 import net.echo.server.pipeline.handler.InboundHandler;
@@ -15,40 +16,63 @@ public record MessageHandler<T>(TcpServer<T> server, T context, Channel channel)
         implements CompletionHandler<Integer, ByteBuffer> {
 
     @Override
-    public void completed(Integer result, ByteBuffer attachment) {
-        if (attachment == null) {
-            throw new IllegalStateException("Attachment is null");
+    public void completed(Integer result, ByteBuffer buffer) {
+        if (buffer == null) {
+            throw new IllegalStateException("Buffer is null");
         }
 
-        if (result == -1) {
+        if (result == -1 || !channel.isOpen()) {
             server.getCachedPipeline().getHandlers().forEach(handler -> handler.onChannelDisconnect(context));
             channel.close();
+
             return;
         }
 
-        List<Transmitter<T>> transmitters = server.getCachedPipeline().getTransmitters();
-        Object input = attachment;
+        buffer.flip();
 
-        for (Transmitter<T> transmitter : transmitters) {
-            if (transmitter instanceof Transmitter.In<T, ?, ?> in && input != null) {
-                input = in.readObject(context, input);
+        while (buffer.remaining() > 0) {
+            NetworkBuffer networkBuffer = new NetworkBuffer(buffer);
+            networkBuffer.mark();
+
+            int packetLength = networkBuffer.readVarInt();
+
+            if (buffer.remaining() >= packetLength) {
+                byte[] bytes = networkBuffer.readBytes(packetLength);
+
+                List<Transmitter<T>> transmitters = server.getCachedPipeline().getTransmitters();
+                Object input = new NetworkBuffer(ByteBuffer.wrap(bytes));
+
+                for (Transmitter<T> transmitter : transmitters) {
+                    if (input == null) continue;
+
+                    if (!(transmitter instanceof Transmitter.In<T, ?, ?> in)) continue;
+
+                    input = in.readObject(context, input);
+                }
+
+                if (input != null) {
+                    for (InboundHandler<T, ?> handler : server.getCachedPipeline().getHandlers()) {
+                        handler.handleObject(context, input);
+                    }
+                }
+            } else {
+                networkBuffer.reset();
+                break;
             }
         }
 
-        if (input != null) {
-            for (InboundHandler<T, ?> handler : server.getCachedPipeline().getHandlers()) {
-                handler.handleObject(context, input);
-            }
+        ByteBuffer next = buffer.remaining() == 0 ? ByteBuffer.allocate(256) : buffer;
+
+        if (!channel.isOpen()) {
+            LOGGER.warn("Tried to read but the channel is closed!");
+            return;
         }
 
-        System.out.println("Finished reading, clearing and reading again");
-
-        ByteBuffer buffer = ByteBuffer.allocate(1024);
-        channel.getSocketChannel().read(buffer, buffer, this);
+        channel.getSocketChannel().read(next, next, this);
     }
 
     @Override
-    public void failed(Throwable exc, ByteBuffer attachment) {
-        LOGGER.error("Exception while reading", exc);
+    public void failed(Throwable exc, ByteBuffer buffer) {
+        LOGGER.error("Exception while reading!", exc);
     }
 }

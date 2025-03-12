@@ -76,7 +76,8 @@ public enum ConnectionState {
     private final Map<PacketOwnership, PacketRegistry> registryMap = new HashMap<>();
 
     public <T extends Packet> void register(PacketOwnership ownership, int id, PacketFactory<T> packetFactory) {
-        PacketRegistry registry = new PacketRegistry();
+        PacketRegistry registry = registryMap.containsKey(ownership) ? registryMap.get(ownership) : new PacketRegistry();
+
         registry.register(id, packetFactory);
         registryMap.put(ownership, registry);
     }
@@ -91,7 +92,8 @@ public enum ConnectionState {
     }
 
     public int getIdFromPacket(PacketOwnership direction, Packet packet) {
-        return registryMap.get(direction).getPacketIdMap().get(packet.getClass());
+        var map = registryMap.get(direction).getPacketIdMap();
+        return map.get(packet.getClass());
     }
 }
 

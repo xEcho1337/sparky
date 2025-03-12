@@ -1,7 +1,7 @@
 package net.echo.sparky.network.packet;
 
-import net.echo.server.NetworkBuffer;
-import net.echo.sparky.network.handler.PacketHandlerProcessor;
+import net.echo.server.buffer.NetworkBuffer;
+import net.echo.sparky.network.handler.PacketProcessor;
 
 /**
  * Abstract reference to a Minecraft packet.
@@ -14,7 +14,7 @@ public interface Packet {
     interface Client extends Packet {
         void read(NetworkBuffer buffer);
 
-        void handle(PacketHandlerProcessor processor);
+        void handle(PacketProcessor processor);
     }
 
     /**

@@ -5,14 +5,13 @@ import net.echo.server.attributes.Attribute;
 
 import java.io.IOException;
 import java.net.SocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
 
+@SuppressWarnings("all")
 public class Channel {
 
     private final TcpServer<?> server;
@@ -39,8 +38,8 @@ public class Channel {
         return socketChannel.isOpen();
     }
 
-    public Future<Integer> write(ByteBuffer data) {
-        return socketChannel.write(data);
+    public void flushQueue() {
+        server.flush(this, writeQueue);
     }
 
     public void write(Object data) {
@@ -48,15 +47,17 @@ public class Channel {
     }
 
     public void writeAndFlush(Object data) {
-        writeQueue.add(data);
-        server.flush(this, writeQueue);
+        write(data);
+        flushQueue();
     }
 
     public <T> void setAttribute(Attribute<T> attribute, T value) {
-        Attribute<T> clone = attribute.copy();
-        clone.setValue(value);
+        Attribute<T> copy = attributeMap.containsKey(attribute.getIdentifier())
+                ? getAttribute(attribute)
+                : attribute.copy();
 
-        attributeMap.put(attribute.getIdentifier(), clone);
+        copy.setValue(value);
+        attributeMap.put(attribute.getIdentifier(), copy);
     }
 
     public <T> Attribute<T> getAttribute(Attribute<T> attribute) {

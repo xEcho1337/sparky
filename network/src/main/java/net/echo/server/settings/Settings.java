@@ -1,11 +1,10 @@
-package net.echo.server.bootstrap;
+package net.echo.server.settings;
 
 public class Settings {
 
-    private int acceptThreads;
     private int threads;
 
-    public int receiveThreads() {
+    public int threads() {
         return threads;
     }
 

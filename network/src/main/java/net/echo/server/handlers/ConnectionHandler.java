@@ -17,6 +17,7 @@ public record ConnectionHandler<T>(TcpServer<T> server)
     @Override
     public void completed(AsynchronousSocketChannel result, Object attachment) {
         AsynchronousServerSocketChannel serverChannel = server.getServerChannel();
+
         if (server.isRunning() && serverChannel.isOpen()) {
             serverChannel.accept(null, this);
         }
@@ -27,7 +28,7 @@ public record ConnectionHandler<T>(TcpServer<T> server)
         server.getCachedPipeline().getHandlers().forEach(handler -> handler.onChannelConnect(context));
         server.getConnectionMap().put(channel, context);
 
-        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        ByteBuffer buffer = ByteBuffer.allocate(256);
         result.read(buffer, buffer, new MessageHandler<>(server, context, channel));
     }
 

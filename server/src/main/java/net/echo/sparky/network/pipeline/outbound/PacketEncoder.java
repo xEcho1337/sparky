@@ -1,6 +1,6 @@
 package net.echo.sparky.network.pipeline.outbound;
 
-import net.echo.server.NetworkBuffer;
+import net.echo.server.buffer.NetworkBuffer;
 import net.echo.server.attributes.Attribute;
 import net.echo.server.pipeline.transmitters.Transmitter;
 import net.echo.sparky.network.NetworkManager;
@@ -30,7 +30,7 @@ public class PacketEncoder implements Transmitter.Out<PlayerConnection, Packet.S
 
     @Override
     public void handleException(PlayerConnection connection, Exception exception) {
-        LOGGER.error(exception);
+        LOGGER.error("Exception caught while encoding!", exception);
         connection.getChannel().close();
     }
 }

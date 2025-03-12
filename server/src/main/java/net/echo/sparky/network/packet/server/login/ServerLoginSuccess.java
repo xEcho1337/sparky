@@ -1,6 +1,6 @@
 package net.echo.sparky.network.packet.server.login;
 
-import net.echo.server.NetworkBuffer;
+import net.echo.server.buffer.NetworkBuffer;
 import net.echo.sparky.network.packet.Packet;
 
 import java.util.UUID;

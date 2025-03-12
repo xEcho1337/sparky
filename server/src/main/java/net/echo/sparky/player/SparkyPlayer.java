@@ -3,6 +3,7 @@ package net.echo.sparky.player;
 import net.echo.sparky.MinecraftServer;
 import net.echo.sparky.config.ServerConfig;
 import net.echo.sparky.network.packet.server.play.ServerChatMessage;
+import net.echo.sparky.network.packet.server.play.ServerKeepAlive;
 import net.echo.sparky.network.packet.server.play.ServerPositionAndLook;
 import net.echo.sparky.network.packet.server.play.ServerRespawn;
 import net.echo.sparky.network.player.PlayerConnection;
@@ -45,7 +46,7 @@ public class SparkyPlayer {
         MinecraftServer.INSTANCE.schedule(() -> {
             if (location.getWorld() != world) {
                 ServerConfig config = MinecraftServer.INSTANCE.getConfig();
-                Difficulty difficulty = Difficulty.values()[config.getDifficulty()];
+                Difficulty difficulty = config.getDifficulty();
 
                 ServerRespawn respawn = new ServerRespawn(Dimension.OVERWORLD, difficulty, GameMode.SURVIVAL, LevelType.DEFAULT);
 
@@ -59,6 +60,17 @@ public class SparkyPlayer {
         });
 
         this.location = location;
+    }
+
+    public void tick() {
+        long difference = System.currentTimeMillis() - lastKeepAlive;
+
+        if (difference > 10 * 1000) {
+            this.lastKeepAlive = System.currentTimeMillis();
+
+            int id = (int) (lastKeepAlive % 1_000_000);
+            this.connection.sendPacket(new ServerKeepAlive(id));
+        }
     }
 
     public PlayerConnection getConnection() {

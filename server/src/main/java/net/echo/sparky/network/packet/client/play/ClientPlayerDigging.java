@@ -1,7 +1,7 @@
 package net.echo.sparky.network.packet.client.play;
 
-import net.echo.server.NetworkBuffer;
-import net.echo.sparky.network.handler.PacketHandlerProcessor;
+import net.echo.server.buffer.NetworkBuffer;
+import net.echo.sparky.network.handler.PacketProcessor;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparkyapi.enums.Facing;
 import net.echo.sparkyapi.math.Vector3i;
@@ -20,7 +20,7 @@ public class ClientPlayerDigging implements Packet.Client {
     }
 
     @Override
-    public void handle(PacketHandlerProcessor processor) {
+    public void handle(PacketProcessor processor) {
         processor.handlePlayerDigging(this);
     }
 

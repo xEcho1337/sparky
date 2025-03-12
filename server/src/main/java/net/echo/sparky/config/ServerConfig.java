@@ -1,10 +1,13 @@
 package net.echo.sparky.config;
 
 import com.moandjiezana.toml.Toml;
+import net.echo.sparkyapi.enums.Difficulty;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 
 import java.io.*;
+
+import static net.echo.sparky.MinecraftServer.LOGGER;
 
 public class ServerConfig {
 
@@ -16,7 +19,7 @@ public class ServerConfig {
             createFromResources(file);
         }
 
-        toml = toml.read(file);
+        this.toml = toml.read(file);
     }
 
     private void createFromResources(File file) {
@@ -31,7 +34,7 @@ public class ServerConfig {
             writer.write(new String(resource.readAllBytes()));
             writer.flush();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            LOGGER.error("Exception while creating server.toml!", e);
         }
     }
 
@@ -47,16 +50,17 @@ public class ServerConfig {
         return deserializer.deserialize(toml.getString("motd"));
     }
 
-    public int getNettyThreads() {
-        return Math.toIntExact(toml.getLong("netty_threads"));
+    public int getThreads() {
+        return Math.toIntExact(toml.getLong("threads"));
     }
 
     public int getTickRate() {
         return Math.toIntExact(toml.getLong("ticks_per_second"));
     }
 
-    public int getDifficulty() {
-        return Math.toIntExact(toml.getLong("difficulty"));
+    public Difficulty getDifficulty() {
+        int index = Math.toIntExact(toml.getLong("difficulty"));
+        return Difficulty.values()[index];
     }
 
     public int getMaxPlayers() {

@@ -1,13 +1,12 @@
-package net.echo.server;
+package net.echo.server.buffer;
 
 import net.echo.sparkyapi.math.Vector3i;
-
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
 public class NetworkBuffer {
 
-    private final ByteBuffer buffer;
+    private ByteBuffer buffer;
 
     public NetworkBuffer() {
         this.buffer = ByteBuffer.allocate(1024);
@@ -17,8 +16,24 @@ public class NetworkBuffer {
         this.buffer = buffer;
     }
 
+    public NetworkBuffer(int size) {
+        this.buffer = ByteBuffer.allocate(size);
+    }
+
     public ByteBuffer getBuffer() {
         return buffer;
+    }
+
+    private void ensureCapacity(int additionalCapacity) {
+        if (buffer.position() + additionalCapacity > buffer.capacity()) {
+            int newCapacity = Math.max(buffer.capacity() * 2, buffer.capacity() + additionalCapacity);
+
+            ByteBuffer newBuffer = ByteBuffer.allocate(newCapacity);
+            buffer.flip();
+
+            newBuffer.put(buffer);
+            buffer = newBuffer;
+        }
     }
 
     public void mark() {
@@ -26,14 +41,18 @@ public class NetworkBuffer {
     }
 
     public void reset() {
-        buffer.reset();
+        if (buffer.position() > 0) {
+            buffer.reset();
+        }
     }
 
     public byte readByte() {
+        if (buffer.remaining() < 1) return 0;
         return buffer.get();
     }
 
     public void writeByte(int value) {
+        ensureCapacity(1);
         buffer.put((byte) value);
     }
 
@@ -42,6 +61,7 @@ public class NetworkBuffer {
     }
 
     public void writeShort(int value) {
+        ensureCapacity(2);
         buffer.putShort((short) value);
     }
 
@@ -54,6 +74,7 @@ public class NetworkBuffer {
     }
 
     public void writeInt(int value) {
+        ensureCapacity(4);
         buffer.putInt(value);
     }
 
@@ -62,6 +83,7 @@ public class NetworkBuffer {
     }
 
     public void writeLong(long value) {
+        ensureCapacity(8);
         buffer.putLong(value);
     }
 
@@ -70,6 +92,7 @@ public class NetworkBuffer {
     }
 
     public void writeFloat(float value) {
+        ensureCapacity(4);
         buffer.putFloat(value);
     }
 
@@ -78,6 +101,7 @@ public class NetworkBuffer {
     }
 
     public void writeDouble(double value) {
+        ensureCapacity(8);
         buffer.putDouble(value);
     }
 
@@ -89,15 +113,15 @@ public class NetworkBuffer {
         }
 
         byte[] bytes = new byte[length];
-        buffer.get(bytes);
+        buffer.get(bytes, 0, length);
 
         return new String(bytes);
     }
 
     public void writeString(String value) {
         byte[] bytes = value.getBytes();
-
         writeVarInt(bytes.length);
+        ensureCapacity(bytes.length);
         buffer.put(bytes);
     }
 
@@ -105,7 +129,6 @@ public class NetworkBuffer {
         int value = 0;
         int length = 0;
         byte currentByte;
-
         do {
             currentByte = readByte();
             value |= (currentByte & 0x7F) << (length * 7);
@@ -119,11 +142,11 @@ public class NetworkBuffer {
     }
 
     public void writeVarInt(int value) {
+        ensureCapacity(5);
         while ((value & 0xFFFFFF80) != 0L) {
             writeByte((value & 0x7F) | 0x80);
             value >>>= 7;
         }
-
         writeByte(value & 0x7F);
     }
 
@@ -131,37 +154,33 @@ public class NetworkBuffer {
         long value = 0;
         int size = 0;
         int b;
-
         while (((b = readByte()) & 0x80) == 0x80) {
             value |= (long) (b & 0x7F) << (size++ * 7);
         }
-
         return value | ((long) (b & 0x7F) << (size * 7));
     }
 
     public void writeVarLong(long value) {
+        ensureCapacity(10);
         while ((value & ~0x7F) != 0) {
             writeByte((int) (value & 0x7F) | 0x80);
             value >>>= 7;
         }
-
         writeByte((int) value);
     }
 
     public void writeBytes(byte[] bytes) {
+        ensureCapacity(bytes.length);
         buffer.put(bytes);
     }
 
     public void writeBytes(byte[] bytes, int index, int length) {
+        ensureCapacity(length);
         buffer.put(bytes, index, length);
     }
 
-    public int readableBytes() {
+    public int remaining() {
         return buffer.remaining();
-    }
-
-    public int readableBytes(int size) {
-        return size - buffer.remaining();
     }
 
     public void writeUUID(UUID uniqueId) {
@@ -174,6 +193,7 @@ public class NetworkBuffer {
     }
 
     public void writeBoolean(boolean value) {
+        ensureCapacity(1);
         buffer.put((byte) (value ? 1 : 0));
     }
 
@@ -188,10 +208,9 @@ public class NetworkBuffer {
     }
 
     public void writePosition(Vector3i position) {
-        int x = position.getX();
-        int y = position.getY();
-        int z = position.getZ();
-        writeLong(((long) (x & 0x3FFFFFF) << 38) | ((long) (z & 0x3FFFFFF) << 12) | (y & 0xFFF));
+        writeLong(((long) (position.getX() & 0x3FFFFFF) << 38)
+                | ((long) (position.getZ() & 0x3FFFFFF) << 12)
+                | (position.getY() & 0xFFF));
     }
 
     public Vector3i readPosition() {

@@ -2,16 +2,8 @@ package net.echo.sparky.network;
 
 import net.echo.server.TcpServer;
 import net.echo.server.attributes.Attribute;
-import net.echo.server.bootstrap.Settings;
-import net.echo.server.channel.Channel;
-import net.echo.server.pipeline.Pipeline;
+import net.echo.server.settings.Settings;
 import net.echo.sparky.MinecraftServer;
-import net.echo.sparky.network.pipeline.PacketHandler;
-import net.echo.sparky.network.pipeline.inbound.MessageSplitter;
-import net.echo.sparky.network.pipeline.inbound.PacketDecoder;
-import net.echo.sparky.network.pipeline.outbound.MessageSerializer;
-import net.echo.sparky.network.pipeline.outbound.PacketEncoder;
-import net.echo.sparky.network.player.ConnectionManager;
 import net.echo.sparky.network.player.PlayerConnection;
 import net.echo.sparky.network.state.ConnectionState;
 
@@ -20,42 +12,21 @@ public class NetworkManager {
     public static final Attribute<ConnectionState> CONNECTION_STATE = Attribute.of("connection_state");
 
     private final MinecraftServer server;
-    private final ConnectionManager connectionManager;
-
     private TcpServer<PlayerConnection> tcpServer;
 
     public NetworkManager(MinecraftServer server) {
         this.server = server;
-        this.connectionManager = new ConnectionManager();
     }
 
     public void start(int port) {
-        int threads = server.getConfig().getNettyThreads();
-
+        int threads = server.getConfig().getThreads();
         Settings settings = new Settings().setThreads(threads);
 
-        tcpServer = new TcpServer<>(settings) {
-            @Override
-            public Pipeline<PlayerConnection> getPipeline() {
-                return new Pipeline<PlayerConnection>()
-                        .addTransmitter(new MessageSplitter())
-                        .addTransmitter(new PacketDecoder())
-
-                        .addTransmitter(new PacketEncoder())
-                        .addTransmitter(new MessageSerializer())
-
-                        .addHandler(new PacketHandler(NetworkManager.this));
-            }
-
-            @Override
-            public PlayerConnection createConnection(Channel channel) {
-                channel.setAttribute(CONNECTION_STATE, ConnectionState.HANDSHAKING);
-                return new PlayerConnection(channel);
-            }
-        };
+        tcpServer = new TcpServerImpl(settings);
         tcpServer.start(port);
 
-        server.getLogger().info("Opened network channel on port {} with {} threads", port, threads);
+        server.getLogger().info("Opened network channel on port {} with {} threads", port,
+                tcpServer.getSettings().threads());
     }
 
     public void stop() {
@@ -65,9 +36,5 @@ public class NetworkManager {
 
     public MinecraftServer getServer() {
         return server;
-    }
-
-    public ConnectionManager getConnectionManager() {
-        return connectionManager;
     }
 }

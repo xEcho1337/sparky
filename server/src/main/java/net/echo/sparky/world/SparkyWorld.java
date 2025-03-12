@@ -3,7 +3,6 @@ package net.echo.sparky.world;
 import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import net.echo.sparky.world.chunk.ChunkColumn;
-import net.echo.sparky.world.chunk.ChunkSection;
 import net.echo.sparkyapi.world.Block;
 import net.echo.sparkyapi.world.World;
 import net.echo.sparkyapi.world.chunk.Chunk;
@@ -26,8 +25,8 @@ public class SparkyWorld implements World {
     }
 
     @Override
-    public Chunk getChunkAt(int x, int z) {
-        return chunks.get(getChunkIdentifier(x, z));
+    public ChunkColumn getChunkAt(int x, int z) {
+        return (ChunkColumn) chunks.get(getChunkIdentifier(x, z));
     }
 
     @Override

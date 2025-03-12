@@ -1,11 +1,11 @@
 package net.echo.server;
 
-import net.echo.server.bootstrap.Settings;
 import net.echo.server.channel.Channel;
 import net.echo.server.handlers.ConnectionHandler;
-import net.echo.server.handlers.MessageHandler;
+import net.echo.server.handlers.FlushHandler;
 import net.echo.server.pipeline.Pipeline;
 import net.echo.server.pipeline.transmitters.Transmitter;
+import net.echo.server.settings.Settings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,28 +13,27 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 
 public abstract class TcpServer<C> {
 
     public static Logger LOGGER = LogManager.getLogger(TcpServer.class);
 
-    private final Map<Channel, C> connectionMap;
-    private final ExecutorService executor;
-    private final Pipeline<C> pipeline;
+    protected final Map<Channel, C> connectionMap;
+    protected final ExecutorService executor;
+    protected final Pipeline<C> pipeline;
+    protected final Settings settings;
 
     private AsynchronousServerSocketChannel serverChannel;
     private volatile boolean running;
 
     public TcpServer(Settings settings) {
         this.connectionMap = new HashMap<>();
-        this.executor = Executors.newFixedThreadPool(settings.receiveThreads());
+        this.executor = Executors.newFixedThreadPool(settings.threads());
         this.pipeline = getPipeline();
+        this.settings = settings;
     }
 
     public Map<Channel, C> getConnectionMap() {
@@ -51,6 +50,10 @@ public abstract class TcpServer<C> {
 
     public Pipeline<C> getCachedPipeline() {
         return pipeline;
+    }
+
+    public Settings getSettings() {
+        return settings;
     }
 
     public boolean isRunning() {
@@ -77,38 +80,84 @@ public abstract class TcpServer<C> {
         this.executor.shutdown();
     }
 
-    public void handleClientMessages(Channel channel, C context) {
-        System.out.println("Waiting for a message");
+    private ByteBuffer transmitPacket(C connection, Object packet) {
+        List<Transmitter<C>> transmitters = pipeline.getTransmitters();
+        Object input = packet;
 
-        ByteBuffer buffer = ByteBuffer.allocate(1024);
-        buffer.clear();
+        for (Transmitter<C> transmitter : transmitters) {
+            if (input == null) continue;
 
-        channel.getSocketChannel().read(buffer, buffer, new MessageHandler<>(this, context, channel));
+            if (!(transmitter instanceof Transmitter.Out<C, ?, ?> out)) continue;
+
+            input = out.writeObject(connection, input);
+        }
+
+        if (!(input instanceof ByteBuffer byteBuffer)) {
+            LOGGER.error("Closing pipeline doesn't return a ByteBuffer instance!");
+            return null;
+        }
+
+        return byteBuffer;
     }
 
-    public void flush(Channel channel, List<Object> writeQueue) {
+    public void flush(Channel channel, Object packet) {
         C connection = connectionMap.get(channel);
 
         if (connection == null) {
             throw new NullPointerException("Connection not stored");
         }
 
-        for (Object object : writeQueue) {
-            List<Transmitter<C>> transmitters = pipeline.getTransmitters();
+        ByteBuffer buffer = transmitPacket(connection, packet);
 
-            Object input = object;
-
-            for (Transmitter<C> transmitter : transmitters) {
-                if (!(transmitter instanceof Transmitter.Out<C, ?, ?> out)) continue;
-
-                input = out.writeObject(connection, input);
-            }
-        }
+        channel.getSocketChannel().write(buffer, null, new FlushHandler(LOGGER));
     }
 
-    public void forEachTransmitter(Consumer<Transmitter<C>> consumer) {
-        for (Transmitter<C> transmitter : pipeline.getTransmitters()) {
-            consumer.accept(transmitter);
+    public void flush(Channel channel, List<Object> writeQueue) {
+        if (writeQueue.isEmpty()) return;
+
+        C connection = connectionMap.get(channel);
+
+        if (connection == null) {
+            throw new NullPointerException("Connection not stored");
         }
+
+        List<ByteBuffer> buffers = new ArrayList<>();
+
+        for (Object packet : writeQueue) {
+            buffers.add(transmitPacket(connection, packet));
+        }
+
+        // Optimization, merge all packets in a single byte buffer
+        ByteBuffer combinedBuffer = ByteBuffer.allocate(estimateTotalSize(buffers));
+
+        for (ByteBuffer byteBuffer : buffers) {
+            if (combinedBuffer.remaining() < byteBuffer.remaining()) {
+                combinedBuffer.flip();
+                executor.submit(() ->
+                        channel.getSocketChannel().write(combinedBuffer, null, new FlushHandler(LOGGER)));
+                combinedBuffer.clear();
+            }
+
+            combinedBuffer.put(byteBuffer);
+        }
+
+        if (combinedBuffer.position() > 0) {
+            combinedBuffer.flip();
+            System.out.println("SENDING TOTAL: " + combinedBuffer.remaining());
+            executor.submit(() ->
+                    channel.getSocketChannel().write(combinedBuffer, null, new FlushHandler(LOGGER)));
+        }
+
+        writeQueue.clear();
+    }
+
+    private int estimateTotalSize(List<ByteBuffer> buffers) {
+        int totalSize = 0;
+
+        for (ByteBuffer byteBuffer : buffers) {
+            totalSize += byteBuffer.remaining();
+        }
+
+        return totalSize > 0 ? totalSize : 1024;
     }
 }

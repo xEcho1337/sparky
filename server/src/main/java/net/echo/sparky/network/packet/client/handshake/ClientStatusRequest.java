@@ -1,7 +1,7 @@
 package net.echo.sparky.network.packet.client.handshake;
 
-import net.echo.server.NetworkBuffer;
-import net.echo.sparky.network.handler.PacketHandlerProcessor;
+import net.echo.server.buffer.NetworkBuffer;
+import net.echo.sparky.network.handler.PacketProcessor;
 import net.echo.sparky.network.packet.Packet;
 
 public class ClientStatusRequest implements Packet.Client {
@@ -14,7 +14,7 @@ public class ClientStatusRequest implements Packet.Client {
     }
 
     @Override
-    public void handle(PacketHandlerProcessor processor) {
+    public void handle(PacketProcessor processor) {
         processor.handleStatusRequest(this);
     }
 }

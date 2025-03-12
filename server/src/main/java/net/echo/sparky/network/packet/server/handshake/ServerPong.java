@@ -1,6 +1,6 @@
 package net.echo.sparky.network.packet.server.handshake;
 
-import net.echo.server.NetworkBuffer;
+import net.echo.server.buffer.NetworkBuffer;
 import net.echo.sparky.network.packet.Packet;
 
 public class ServerPong implements Packet.Server {

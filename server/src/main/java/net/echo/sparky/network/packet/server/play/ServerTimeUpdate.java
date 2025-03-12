@@ -1,6 +1,6 @@
 package net.echo.sparky.network.packet.server.play;
 
-import net.echo.server.NetworkBuffer;
+import net.echo.server.buffer.NetworkBuffer;
 import net.echo.sparky.network.packet.Packet;
 
 public class ServerTimeUpdate implements Packet.Server {

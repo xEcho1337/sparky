@@ -1,6 +1,6 @@
 package net.echo.sparky.network.packet.server.play;
 
-import net.echo.server.NetworkBuffer;
+import net.echo.server.buffer.NetworkBuffer;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparkyapi.enums.Difficulty;
 import net.echo.sparkyapi.enums.Dimension;
