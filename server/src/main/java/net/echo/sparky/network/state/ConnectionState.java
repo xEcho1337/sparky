@@ -69,6 +69,7 @@ public enum ConnectionState {
             register(SERVER, 0x07, ServerRespawn::new);
             register(SERVER, 0x08, ServerPositionAndLook::new);
             register(SERVER, 0x21, ServerChunkData::new);
+            register(SERVER, 0x26, ServerChunkDataBulk::new);
             register(SERVER, 0x40, ServerDisconnect::new);
         }
     };

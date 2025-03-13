@@ -61,7 +61,6 @@ public class TickSchedulerThread extends Thread {
         // TODO: Tick everything
         for (SparkyPlayer player : server.getPlayerList()) {
             player.tick();
-
         }
 
         scheduledTasks.clear();

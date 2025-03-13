@@ -23,20 +23,21 @@ import net.echo.sparky.network.state.ConnectionState;
 import net.echo.sparky.player.SparkyPlayer;
 import net.echo.sparky.utils.ThreadScheduleUtils;
 import net.echo.sparky.world.SparkyWorld;
-import net.echo.sparky.world.chunk.ChunkColumn;
 import net.echo.sparkyapi.enums.Difficulty;
 import net.echo.sparkyapi.enums.Dimension;
 import net.echo.sparkyapi.enums.GameMode;
 import net.echo.sparkyapi.enums.LevelType;
-import net.echo.sparkyapi.flags.impl.TeleportFlag;
 import net.echo.sparkyapi.math.Vector3i;
 import net.echo.sparkyapi.player.GameProfile;
 import net.echo.sparkyapi.world.Location;
+import net.echo.sparkyapi.world.chunk.Chunk;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -95,6 +96,7 @@ public record PacketProcessor(MinecraftServer server, PlayerConnection connectio
     public void handleLoginStart(ClientLoginStart packet) {
         LOGIN_THREAD.submit(() -> {
             Channel channel = connection.getChannel();
+            ServerConfig config = server.getConfig();
 
             String name = packet.getName();
             UUID uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
@@ -102,7 +104,15 @@ public record PacketProcessor(MinecraftServer server, PlayerConnection connectio
             AsyncPreLoginEvent event = new AsyncPreLoginEvent(name, uuid);
             server.getEventHandler().call(event);
 
-            if (event.isCancelled()) return;
+            if (event.isCancelled()) {
+                connection.close(null);
+                return;
+            }
+
+            if (!name.matches(config.getUsernameFormat())) {
+                connection.close(Component.text("Invalid username!").color(NamedTextColor.RED));
+                return;
+            }
 
             SparkyPlayer player = connection.getPlayer();
             GameProfile profile = new GameProfile(event.getName(), event.getUuid());
@@ -123,42 +133,43 @@ public record PacketProcessor(MinecraftServer server, PlayerConnection connectio
 
             channel.setAttribute(NetworkManager.CONNECTION_STATE, ConnectionState.PLAY);
 
-            ServerConfig config = server.getConfig();
             Difficulty difficulty = config.getDifficulty();
 
-            Location location = new Location(world, 0, 64, 0, 0, 0);
-            player.setLocation(location);
+            Location location = new Location(world, -64, 64, 0, 0, 0);
 
-            connection.sendPacket(new ServerJoinGame(0, GameMode.CREATIVE, Dimension.NETHER, difficulty, config.getMaxPlayers(), LevelType.DEFAULT, false));
-            connection.sendPacket(new ServerSpawnPosition(new Vector3i(0, 0, 0)));
-            connection.sendPacket(new ServerPositionAndLook(0, 64, 0, 0, 0, TeleportFlag.EMPTY));
+            connection.sendPacket(new ServerJoinGame(0, GameMode.CREATIVE, Dimension.OVERWORLD, difficulty, config.getMaxPlayers(), LevelType.DEFAULT, false));
+            connection.sendPacket(new ServerSpawnPosition(new Vector3i(-64, 0, 0)));
+            player.teleport(location);
 
-            server.schedule(() -> {
-                LoginEvent.LoginResult result = new LoginEvent.LoginResult(LoginEvent.LoginResultType.ALLOWED, "");
-                LoginEvent loginEvent = new LoginEvent(player, result);
+            server.getPlayerList().add(player);
 
-                server.getEventHandler().call(loginEvent);
+            LoginEvent.LoginResult result = new LoginEvent.LoginResult(LoginEvent.LoginResultType.ALLOWED, "");
+            LoginEvent loginEvent = new LoginEvent(player, result);
 
-                if (loginEvent.getResult().getType() != LoginEvent.LoginResultType.ALLOWED) {
-                    TextComponent reason = Component.text(loginEvent.getResult().getReason());
-                    connection.close(reason.color(NamedTextColor.RED));
+            server.getEventHandler().call(loginEvent);
 
-                    return;
+            if (loginEvent.getResult().getType() != LoginEvent.LoginResultType.ALLOWED) {
+                TextComponent reason = Component.text(loginEvent.getResult().getReason());
+                connection.close(reason.color(NamedTextColor.RED));
+
+                server.getPlayerList().remove(player);
+                return;
+            }
+
+            List<Chunk> chunks = new ArrayList<>();
+
+            int renderDistance = config.getRenderDistance() / 2;
+            for (int x = -renderDistance; x < renderDistance; x++) {
+                for (int z = -renderDistance; z < renderDistance; z++) {
+                    Chunk column = world.getChunkAt(x, z);
+
+                    if (column == null) continue;
+
+                    chunks.add(column);
                 }
+            }
 
-                server.getPlayerList().add(player);
-
-                int renderDistance = config.getRenderDistance() / 2;
-                for (int x = -renderDistance; x < renderDistance; x++) {
-                    for (int z = -renderDistance; z < renderDistance; z++) {
-                        ChunkColumn column = world.getChunkAt(x, z);
-
-                        if (column == null) continue;
-
-                        connection.sendPacket(new ServerChunkData(column, true));
-                    }
-                }
-            });
+            connection.sendPacket(new ServerChunkDataBulk(chunks));
         });
     }
 
@@ -167,8 +178,9 @@ public record PacketProcessor(MinecraftServer server, PlayerConnection connectio
 
     public void handleChatMessage(ClientChatMessage packet) {
         CHAT_THREAD.submit(() -> {
+            ServerConfig config = server.getConfig();
             System.out.println("RECEIVED: " + packet.getMessage());
-            AsyncChatEvent event = new AsyncChatEvent(packet.getMessage(), "<%s> %s");
+            AsyncChatEvent event = new AsyncChatEvent(packet.getMessage(), config.getChatFormat());
 
             server.getEventHandler().call(event);
 
@@ -177,7 +189,6 @@ public record PacketProcessor(MinecraftServer server, PlayerConnection connectio
             SparkyPlayer player = connection.getPlayer();
             GameProfile profile = player.getGameProfile();
 
-            System.out.println("BROADCAST");
             TextComponent component = Component.text(String.format(event.getFormat(), profile.getName(), event.getMessage()));
             server.broadcast(component);
         });

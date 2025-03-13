@@ -11,8 +11,6 @@ import net.echo.sparky.network.state.ConnectionState;
 import net.echo.sparky.player.SparkyPlayer;
 import net.kyori.adventure.text.TextComponent;
 
-import static net.echo.sparky.MinecraftServer.LOGGER;
-
 public class PlayerConnection {
 
     private final Channel channel;
@@ -25,7 +23,6 @@ public class PlayerConnection {
 
     public void sendPacket(Packet.Server packet) {
         if (channel == null || !channel.isOpen()) {
-            LOGGER.error("Channel is null or closed!");
             return;
         }
 

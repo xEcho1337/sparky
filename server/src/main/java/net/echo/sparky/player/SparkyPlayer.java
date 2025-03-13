@@ -11,12 +11,15 @@ import net.echo.sparkyapi.enums.Difficulty;
 import net.echo.sparkyapi.enums.Dimension;
 import net.echo.sparkyapi.enums.GameMode;
 import net.echo.sparkyapi.enums.LevelType;
+import net.echo.sparkyapi.flags.impl.TeleportFlag;
 import net.echo.sparkyapi.inventory.Inventory;
 import net.echo.sparkyapi.player.GameProfile;
-import net.echo.sparkyapi.flags.impl.TeleportFlag;
 import net.echo.sparkyapi.player.GameSettings;
-import net.echo.sparkyapi.world.*;
+import net.echo.sparkyapi.world.Location;
+import net.echo.sparkyapi.world.World;
 import net.kyori.adventure.text.TextComponent;
+
+import java.util.UUID;
 
 public class SparkyPlayer {
 
@@ -48,9 +51,13 @@ public class SparkyPlayer {
                 ServerConfig config = MinecraftServer.INSTANCE.getConfig();
                 Difficulty difficulty = config.getDifficulty();
 
-                ServerRespawn respawn = new ServerRespawn(Dimension.OVERWORLD, difficulty, GameMode.SURVIVAL, LevelType.DEFAULT);
+                System.out.println("WORLD: " + world);
+                if (world != null) {
+                    ServerRespawn respawn = new ServerRespawn(Dimension.OVERWORLD, difficulty, GameMode.SURVIVAL, LevelType.DEFAULT);
 
-                connection.sendPacket(respawn);
+                    connection.sendPacket(respawn);
+                }
+
                 world = location.getWorld();
             }
 
@@ -79,6 +86,14 @@ public class SparkyPlayer {
 
     public Inventory getInventory() {
         return inventory;
+    }
+
+    public String getName() {
+        return gameProfile.getName();
+    }
+
+    public UUID getUuid() {
+        return gameProfile.getUuid();
     }
 
     public GameMode getGameMode() {

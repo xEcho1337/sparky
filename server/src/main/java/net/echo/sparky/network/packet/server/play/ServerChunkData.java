@@ -2,7 +2,7 @@ package net.echo.sparky.network.packet.server.play;
 
 import net.echo.server.buffer.NetworkBuffer;
 import net.echo.sparky.network.packet.Packet;
-import net.echo.sparky.world.chunk.ChunkColumn;
+import net.echo.sparkyapi.world.chunk.Chunk;
 import net.echo.sparkyapi.world.chunk.Section;
 
 import java.util.ArrayList;
@@ -11,17 +11,17 @@ import java.util.List;
 
 public class ServerChunkData implements Packet.Server {
 
-    private ChunkColumn chunk;
+    private Chunk chunk;
     private Extracted extractedData;
     private boolean groundUpContinuous;
 
     public ServerChunkData() {
     }
 
-    public ServerChunkData(ChunkColumn chunk, boolean groundUpContinuous) {
+    public ServerChunkData(Chunk chunk, boolean groundUpContinuous) {
         this.chunk = chunk;
         this.groundUpContinuous = groundUpContinuous;
-        this.extractedData = extractData(chunk, groundUpContinuous, 65535);
+        this.extractedData = extractData(chunk, groundUpContinuous, true, 65535);
     }
 
     @Override
@@ -34,12 +34,12 @@ public class ServerChunkData implements Packet.Server {
         buffer.writeBytes(extractedData.data);
     }
 
-    public static Extracted extractData(ChunkColumn chunkColumn, boolean groundUpContinuous, int blockMask) {
+    public static Extracted extractData(Chunk chunk, boolean groundUpContinuous, boolean hasSky, int blockMask) {
         Extracted extracted = new Extracted();
         List<Section> nonEmptySections = new ArrayList<>();
 
         for (int y = 0; y < 16; y++) {
-            Section section = chunkColumn.getSection(y);
+            Section section = chunk.getSection(y);
 
             if (section != null && (!groundUpContinuous || section.getNonAirBlocks() > 0) && (blockMask & 1 << y) != 0) {
                 extracted.dataSize |= 1 << y;
@@ -47,7 +47,7 @@ public class ServerChunkData implements Packet.Server {
             }
         }
 
-        extracted.data = new byte[calculateDataSize(nonEmptySections.size(), true, groundUpContinuous)];
+        extracted.data = new byte[calculateDataSize(nonEmptySections.size(), hasSky, groundUpContinuous)];
         int offset = 0;
 
         for (Section section : nonEmptySections) {
@@ -62,7 +62,7 @@ public class ServerChunkData implements Packet.Server {
         for (Section section : nonEmptySections) {
             byte[] blockLightData = new byte[2048];
 
-            Arrays.fill(blockLightData, (byte) 1);
+            Arrays.fill(blockLightData, (byte) 15);
 
             offset = copyArray(blockLightData, extracted.data, offset);
         }

@@ -1,5 +1,6 @@
 workspace/
 
+server/src/test/java/logs
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar

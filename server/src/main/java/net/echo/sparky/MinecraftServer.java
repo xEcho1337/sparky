@@ -14,7 +14,10 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Function;
 
 /**
@@ -34,7 +37,7 @@ public class MinecraftServer {
     private final MinecraftEventHandler eventHandler;
     private final TickSchedulerThread tickSchedulerThread;
 
-    private final List<SparkyPlayer> playerList = new ArrayList<>();
+    private final Queue<SparkyPlayer> playerList = new ConcurrentLinkedQueue<>();
     private final List<SparkyWorld> worldList = new ArrayList<>();
 
     private volatile boolean running;
@@ -125,7 +128,7 @@ public class MinecraftServer {
         return tickSchedulerThread;
     }
 
-    public List<SparkyPlayer> getPlayerList() {
+    public Collection<SparkyPlayer> getPlayerList() {
         return playerList;
     }
 

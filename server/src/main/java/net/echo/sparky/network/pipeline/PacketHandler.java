@@ -10,6 +10,7 @@ import net.echo.sparky.network.handler.PacketProcessor;
 import net.echo.sparky.network.packet.Packet;
 import net.echo.sparky.network.player.PlayerConnection;
 import net.echo.sparky.network.state.ConnectionState;
+import net.echo.sparky.player.SparkyPlayer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -44,6 +45,26 @@ public class PacketHandler implements InboundHandler<PlayerConnection, Packet.Cl
     public void onChannelDisconnect(PlayerConnection connection) {
         server.getPlayerList().remove(connection.getPlayer());
         processorMap.remove(connection);
+    }
+
+    @Override
+    public void onChannelClose(Channel channel) {
+        SparkyPlayer target = null;
+
+        for (SparkyPlayer player : server.getPlayerList()) {
+            if (!player.getConnection().getChannel().equals(channel)) continue;
+
+            target = player;
+            break;
+        }
+
+        if (target == null) {
+            LOGGER.error("No player found when channel got closed!");
+            return;
+        }
+
+        server.getPlayerList().remove(target);
+        processorMap.remove(target.getConnection());
     }
 
     @Override

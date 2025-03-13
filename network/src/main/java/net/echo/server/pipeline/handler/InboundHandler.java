@@ -1,5 +1,7 @@
 package net.echo.server.pipeline.handler;
 
+import net.echo.server.channel.Channel;
+
 /**
  * Interface for handling inbound messages parsed by transmitters.
  *
@@ -48,5 +50,8 @@ public interface InboundHandler<C, P> {
      * @param connection The remote connection
      */
     default void onChannelDisconnect(C connection) {
+    }
+
+    default void onChannelClose(Channel channel) {
     }
 }

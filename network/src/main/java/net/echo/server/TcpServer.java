@@ -112,7 +112,7 @@ public abstract class TcpServer<C> {
         channel.getSocketChannel().write(buffer, null, new FlushHandler(LOGGER));
     }
 
-    public void flush(Channel channel, List<Object> writeQueue) {
+    public void flush(Channel channel, Collection<Object> writeQueue) {
         if (writeQueue.isEmpty()) return;
 
         C connection = connectionMap.get(channel);
@@ -127,14 +127,16 @@ public abstract class TcpServer<C> {
             buffers.add(transmitPacket(connection, packet));
         }
 
-        // Optimization, merge all packets in a single byte buffer
+        // Optimization: merge all packets in a single byte buffer
         ByteBuffer combinedBuffer = ByteBuffer.allocate(estimateTotalSize(buffers));
+        FlushHandler handler = new FlushHandler(LOGGER);
+
+        System.out.println("Size: " + combinedBuffer.remaining());
 
         for (ByteBuffer byteBuffer : buffers) {
             if (combinedBuffer.remaining() < byteBuffer.remaining()) {
                 combinedBuffer.flip();
-                executor.submit(() ->
-                        channel.getSocketChannel().write(combinedBuffer, null, new FlushHandler(LOGGER)));
+                executor.submit(() -> channel.getSocketChannel().write(combinedBuffer, channel, handler));
                 combinedBuffer.clear();
             }
 
@@ -143,9 +145,7 @@ public abstract class TcpServer<C> {
 
         if (combinedBuffer.position() > 0) {
             combinedBuffer.flip();
-            System.out.println("SENDING TOTAL: " + combinedBuffer.remaining());
-            executor.submit(() ->
-                    channel.getSocketChannel().write(combinedBuffer, null, new FlushHandler(LOGGER)));
+            executor.submit(() -> channel.getSocketChannel().write(combinedBuffer, channel, handler));
         }
 
         writeQueue.clear();

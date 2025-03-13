@@ -54,13 +54,16 @@ public class ServerConfig {
         return Math.toIntExact(toml.getLong("threads"));
     }
 
-    public int getTickRate() {
-        return Math.toIntExact(toml.getLong("ticks_per_second"));
+    public String getUsernameFormat() {
+        return toml.getString("username_format");
     }
 
-    public Difficulty getDifficulty() {
-        int index = Math.toIntExact(toml.getLong("difficulty"));
-        return Difficulty.values()[index];
+    public String getChatFormat() {
+        return toml.getString("chat_format");
+    }
+
+    public int getTickRate() {
+        return Math.toIntExact(toml.getLong("ticks_per_second"));
     }
 
     public int getMaxPlayers() {
@@ -69,6 +72,10 @@ public class ServerConfig {
 
     public String getPingVersionHover() {
         return toml.getString("ping_version_hover");
+    }
+
+    public Difficulty getDifficulty() {
+        return Difficulty.values()[Math.toIntExact(toml.getLong("difficulty"))];
     }
 
     public int getRenderDistance() {

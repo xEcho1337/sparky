@@ -13,7 +13,11 @@ motd = "Powered by <yellow>sparky</yellow>!"
 threads = 4
 
 # Regex to filter for usernames
-username_regex = "([a-zA-Z0-9_])*"
+username_format = "([a-zA-Z0-9_])*"
+
+# Format of the chat messages
+# Parameters: username, pmessage
+chat_format = "%s: %s"
 
 # Amount of ticks per second
 ticks_per_second = 20

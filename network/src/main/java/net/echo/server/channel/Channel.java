@@ -6,10 +6,8 @@ import net.echo.server.attributes.Attribute;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.AsynchronousSocketChannel;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @SuppressWarnings("all")
 public class Channel {
@@ -17,20 +15,20 @@ public class Channel {
     private final TcpServer<?> server;
     private final AsynchronousSocketChannel socketChannel;
     private final Map<String, Attribute<?>> attributeMap;
-    private final List<Object> writeQueue;
+    private final Queue<Object> writeQueue;
 
     public Channel(TcpServer<?> server, AsynchronousSocketChannel socketChannel) {
         this.server = server;
         this.socketChannel = socketChannel;
         this.attributeMap = new HashMap<>();
-        this.writeQueue = new ArrayList<>();
+        this.writeQueue = new ConcurrentLinkedQueue<>();
     }
 
     public AsynchronousSocketChannel getSocketChannel() {
         return socketChannel;
     }
 
-    public List<Object> getWriteQueue() {
+    public Queue<Object> getWriteQueue() {
         return writeQueue;
     }
 
@@ -66,6 +64,9 @@ public class Channel {
 
     public void close() {
         try {
+            server.getCachedPipeline().getHandlers().forEach(handler -> {
+                handler.onChannelClose(this);
+            });
             socketChannel.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
